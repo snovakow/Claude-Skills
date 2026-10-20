@@ -31,7 +31,12 @@ permission check.
 ## What a run does
 
 The review covers everything after the baseline: the last version commit where the project
-keeps them, otherwise the newest pushed commit, so that pushing is what closes a run.
+keeps them, otherwise the newest pushed commit, so that pushing is what closes a run. In that
+case the run asks before reading anything committed above the pushed tip, since nothing in the
+repository says whether a thread committed it unreviewed or a previous run left it unpushed; the
+answer can name the last commit to keep, and the review starts after it. A version commit is the
+stronger checkpoint: it lives in the history and travels with every clone, so a forgotten push
+costs nothing and a commit made by hand is still reviewed at the next release.
 
 1. **Survey.** Fetches, runs `scripts/scan.mjs`, and stops on anything that needs the user: an
    operation in progress, a detached HEAD, a protected branch, a version changed by hand,
@@ -76,9 +81,15 @@ well-formed one, or when the arguments name a version. A new repository therefor
 itemised commits until the first `/commit 0.0.1`, which starts the convention.
 
 With version commits off, the newest pushed commit stays the baseline: every unpushed commit is
-reviewed, one made outside a run included, and until a run's commits are pushed the next run
-reviews them again. That is the trade: nothing is left unreviewed unless it is pushed without a
-run, and a forgotten push costs a repeat.
+asked about, one made outside a run included, and reviewed unless the answer keeps it; until a
+run's commits are pushed the next run asks about them again. That is the trade: nothing is left
+unreviewed unless it is pushed without a run or kept at that question, and a forgotten push
+costs a question.
+
+What has been exercised, as of 2026-10-20: every path of the scan, against scratch repositories
+and against a real history with version commits, and runs of the skill with version commits
+off, in this repository. No run has yet produced a version commit. The first project to turn
+versioning on exercises that path, and this note should change when it does.
 
 ## Growing it into a project's own
 
@@ -94,7 +105,9 @@ Each project skill this one came from added one or more of these. They are the s
   newest pushed commit and reviews only what is unpushed.
 - **A version kept in source.** Set `VERSION_FILE` to the source file, the message to its own
   shape such as `Editor: A.B.C`, and the command to an edit of that file. The scan reads
-  `NAME = 'x.y.z'` from any text file.
+  `NAME = 'x.y.z'` from any text file. The frontmatter already allows an edit, and of the
+  commands that set a version it pre-approves only `npm version`, so a project that sets its
+  version with another command adds that command to `allowed-tools`, or every run prompts for it.
 - **A branch that owns some paths and rebases onto another.** Add an ownership statement, a
   rebase-first step that asks before moving the branch, and a rule that a change to the other
   branch's files is relocated there rather than reviewed here.
@@ -150,3 +163,6 @@ read-only and makes a reasonable first check of a branch before a hand-made comm
 ```bash
 cd /path/to/project && node /path/to/Claude-Skills/skills/commit/scripts/scan.mjs
 ```
+
+`--since <commit>` names the last commit to keep, so the survey starts after it. It is how the
+skill applies the answer to its question about commits above the pushed tip.
