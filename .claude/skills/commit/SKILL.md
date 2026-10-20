@@ -42,7 +42,7 @@ Treat the repository as public. Whatever is committed, in code, comments, docs o
 The one block to adapt for a project. The steps below read it, and `scripts/scan.mjs` holds the same settings at its top; keep the two in step.
 
 - **Protected branches:** `main`, `master`. Work does not land on these. On one, stop and ask.
-- **Version commits:** `off`. This repository carries no version; each skill's `metadata.baseline` date marks its baseline instead. The newest pushed commit is the review's baseline, so pushing closes a run.
+- **Version commits:** `off`. This repository carries no version; each skill's `metadata.baseline` date marks its baseline instead. The newest pushed commit is the review's baseline; a run asks about anything committed above it, and pushing closes a run.
 - **Version shape:** none, since version commits are off.
 - **Changelog:** `off`.
 - **Checks:** `node --check` on every `.mjs` under `skills/` and `.claude/`, then `node skills/commit/scripts/scan.mjs` and `node .claude/skills/commit/scripts/scan.mjs`, each of which must run to completion.
@@ -69,7 +69,7 @@ The one block to adapt for a project. The steps below read it, and `scripts/scan
 
 ## How the pieces fit
 
-- **Baseline.** The review covers everything after it: the range commits, the working tree, staged or not, and untracked files. With version commits, the baseline is the newest well-formed one, since a run ends at its report and everything below has been reviewed. Without, it is the newest pushed commit, or the root when nothing is pushed: pushing is what closes a run, and until a run's commits are pushed the next run reviews them again, which is also what brings a commit made outside a run under review.
+- **Baseline.** The review covers everything after it: the range commits, the working tree, staged or not, and untracked files. With version commits, the baseline is the newest well-formed one, since a run ends at its report and everything below has been reviewed. That checkpoint lives in the history: it travels with every clone, a forgotten push costs nothing, and a commit made by hand after a release is still reviewed at the next one, though never rewritten once pushed. Without, it is the newest pushed commit, or the root when nothing is pushed, or the commit the user names when step 1 asks about what sits above the pushed tip: pushing is what closes a run, and until a run's commits are pushed the next run asks about them, which is also what brings a commit made outside a run under review.
 - **Well-formed version commit.** All of these hold, each read from the commit itself: its whole message is exactly the version message, with no body and no trailer; it touches only the version files, and the version file among them; the version file at that commit reads the number in the message; and, with a changelog, it touches that too and the changelog's newest section at that commit is headed with the number. Anything else is an ordinary commit however much it looks like one: a subject that mentions a version, a bump made by hand, the right message with a trailer under it. The scan marks these lookalikes, and they are reviewed like any range commit.
 - **Rewritable.** A commit may be rewritten only if it is after the baseline and not reachable from any remote branch. The scan prints the rewrite base. Pushed commits in the range are still reviewed, and their problems reported.
 - **Order.** Plan the batch before staging anything. Fixes to existing commits first, then the new commits, then the prose commits for the maintained docs if needed, then the version commit, last.
@@ -90,6 +90,7 @@ Its **Attention** section lists what needs the user. Stop and ask about each bef
 - a changelog section above the last version commit's number, written by hand or by a run that never finished. Ask whether to rewrite it as this run's section or to keep its text as the start of one.
 - credentials or session data in added lines (step 3)
 - a file that looks like it should not be tracked, or a large one
+- commits above the newest pushed commit where no version commit stands. They may be work a thread committed that nobody reviewed, or a run's own commits not yet pushed, and nothing in the repository says which. Ask before reading any of them, listing them oldest first by hash and subject, with these choices: review them all; commit the working tree only, treating all of them as reviewed; or stop, so the user can push first and run again. Say in the question that to keep some and review the rest, the user chooses Other and types the hash of the last commit to keep: that commit and everything below it stay as they are, and the review starts with the commit after it. A hash that names exactly one listed commit becomes this run's baseline, as the newest of them does for the working tree only: run the scan again with `--since <hash>`, and read nothing at or below it. Anything else, ask again rather than guess.
 
 If nothing is new since the baseline, with no range commits, a clean tree and nothing untracked, say so and stop.
 
@@ -168,7 +169,7 @@ Decide the whole batch before staging anything. Take the scan's **Working tree**
 
 ## 8. Verify and report
 
-Run the scan again. `git status` lists only the files deliberately left out; the new version commit, if any, shows as the baseline; no range subject begins `fixup!` or `amend!`. Reread the final messages.
+Run the scan again, with the same `--since` if one was used. `git status` lists only the files deliberately left out; the new version commit, if any, shows as the baseline; no range subject begins `fixup!` or `amend!`. Reread the final messages.
 
 Then report, briefly:
 
@@ -177,7 +178,7 @@ Then report, briefly:
 - the version change and changelog section, if any, and any doc claim only the user can confirm
 - files left uncommitted, each with the reason
 - the checks that ran, with their results
-- the undo point: nothing was pushed, and `git reset --soft <starting hash>` returns the branch to where it stood with every change the run made left staged. Without version commits, say too that pushing is what closes the run: until then, the next run reviews these commits again.
+- the undo point: nothing was pushed, and `git reset --soft <starting hash>` returns the branch to where it stood with every change the run made left staged. Without version commits, say too that pushing is what closes the run: until then, the next run asks about these commits before reviewing them again.
 
 ## 9. After the report
 

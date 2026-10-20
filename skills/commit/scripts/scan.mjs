@@ -5,6 +5,7 @@
 // nothing. Node 18 or later, no dependencies.
 //
 //     node scan.mjs
+//     node scan.mjs --since <commit>    the last commit to keep: the review starts after it
 //
 // The settings block is the part to adapt for a project; everything below it is generic.
 
@@ -140,6 +141,14 @@ try {
   process.exit(2);
 }
 process.chdir(top);
+// --since names the baseline for this run: the last commit to keep, chosen by the user when asked
+// about the commits above the pushed tip. It must be a commit on this branch.
+const sinceArg = (() => { const at = process.argv.indexOf('--since'); return at === -1 ? null : (process.argv[at + 1] ?? ''); })();
+const since = sinceArg === null ? null : tryGit('rev-parse', '-q', '--verify', `${sinceArg}^{commit}`);
+if (sinceArg !== null && (!since || tryGit('merge-base', '--is-ancestor', since, 'HEAD') === null)) {
+  console.error(`scan: --since ${sinceArg || '(empty)'} does not name a commit on this branch`);
+  process.exit(2);
+}
 const EMPTY_TREE = tryGit('hash-object', '-t', 'tree', '/dev/null') ?? '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
 const changelog = CHANGELOG === 'auto'
   ? ['CHANGELOG.md', 'docs/CHANGELOG.md', 'CHANGELOG', 'docs/CHANGELOG'].find((path) => existsSync(path)) ?? null
@@ -202,7 +211,7 @@ const versionDefect = ({ sha, author, message }) => {
 };
 const official = candidates.find((candidate) => versionDefect(candidate) === null) ?? null;
 const officialVersion = official ? VERSION_MESSAGE.exec(official.message)[1] : null;
-const baseline = official?.sha ?? pushedTip;
+const baseline = since ?? official?.sha ?? pushedTip;
 const rewriteBase = baseline && !unpushed.has(baseline) ? pushedTip : baseline;
 const diffBase = baseline ?? EMPTY_TREE;
 
@@ -444,6 +453,8 @@ const attention = [
   ...junk.map((path) => `looks like it should not be tracked: ${path}`),
   ...large.map((item) => `large file added: ${item}`),
   ...stagedLeftAlone.map((path) => `staged, but in Leave alone: ${path}`),
+  ...(!since && !official && commits.length
+    ? [`${count(commits.length, 'commit')} above the newest pushed commit with no version commit standing; ask before reading them whether to review them all, keep them all, or name the last one to keep`] : []),
   ...(!baseline && commits.length > LONG_RANGE
     ? [`${count(commits.length, 'commit')} with no baseline: nothing is pushed and there is no version commit, so the range is the whole history`] : []),
 ];
@@ -464,7 +475,9 @@ say(`Branch: ${branch ?? (hasHead ? '(detached)' : '(unborn)')}${upstream ? `, u
 say(`Remotes: ${remotes.length ? remotes.join(', ') : 'none, so nothing counts as pushed'}`);
 say(`Git user: ${userName ?? '(unset)'}`);
 if (!hasHead) say('No commits yet: the whole working tree is the first batch');
-say(`Baseline: ${official
+say(`Baseline: ${since
+  ? `${short(since)} ${git('log', '-1', '--format=%s', since)} (the last commit kept, named with --since)`
+  : official
   ? `${short(official.sha)} ${official.message} (${unpushed.has(official.sha) ? 'unpushed' : 'pushed'} version commit)`
   : pushedTip
     ? `${short(pushedTip)} ${git('log', '-1', '--format=%s', pushedTip)} (newest pushed commit; ${VERSION_FILE ? 'no version commit yet' : 'pushing closes a run'})`
