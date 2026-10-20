@@ -31,8 +31,7 @@ permission check.
 ## What a run does
 
 The review covers everything after the baseline: the last version commit where the project
-keeps them, otherwise where the previous run on the branch ended, and before any run the newest
-pushed commit.
+keeps them, otherwise the newest pushed commit, so that pushing is what closes a run.
 
 1. **Survey.** Fetches, runs `scripts/scan.mjs`, and stops on anything that needs the user: an
    operation in progress, a detached HEAD, a protected branch, a version changed by hand,
@@ -51,8 +50,7 @@ pushed commit.
    only the version files, no trailer. Where the project has a changelog, the commit also
    carries a new section for the number. It is the next run's baseline.
 7. **Report.** Flags first, then each commit, what was left out and why, the checks that ran, and
-   the undo point. The run records where it ended in the clone's git config, so the next run on
-   the branch starts after it. Nothing is pushed.
+   the undo point. Nothing is pushed.
 
 ## Settings
 
@@ -76,6 +74,11 @@ the scan reads.
 `auto` versioning means: a run ends with a version commit when the history already holds a
 well-formed one, or when the arguments name a version. A new repository therefore gets plain
 itemised commits until the first `/commit 0.0.1`, which starts the convention.
+
+With version commits off, the newest pushed commit stays the baseline: every unpushed commit is
+reviewed, one made outside a run included, and until a run's commits are pushed the next run
+reviews them again. That is the trade: nothing is left unreviewed unless it is pushed without a
+run, and a forgotten push costs a repeat.
 
 ## Growing it into a project's own
 

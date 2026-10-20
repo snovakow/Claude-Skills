@@ -20,7 +20,6 @@ allowed-tools:
   - Bash(GIT_SEQUENCE_EDITOR=true GIT_EDITOR=true git rebase *)
   - Bash(git stash push *)
   - Bash(git stash pop *)
-  - Bash(git config branch.*.reviewed *)
   - Bash(npm run *)
   - Bash(npm version * --no-git-tag-version)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/scan.mjs *)
@@ -43,7 +42,7 @@ Treat the repository as public. Whatever is committed, in code, comments, docs o
 The one block to adapt for a project. The steps below read it, and `scripts/scan.mjs` holds the same settings at its top; keep the two in step.
 
 - **Protected branches:** `main`, `master`. Work does not land on these. On one, stop and ask.
-- **Version commits:** `auto`. `on`: every run ends with one. `off`: never. `auto`: on when the scan reports a last version commit, or the arguments name a version; otherwise off, and the report says how to start.
+- **Version commits:** `auto`. `on`: every run ends with one. `off`: never, and the newest pushed commit stays the baseline: every unpushed commit is reviewed, and pushing is what closes a run. `auto`: on when the scan reports a last version commit, or the arguments name a version; otherwise off, and the report says how to start.
 - **Version shape:** the version lives in `package.json`. `npm version <x.y.z> --no-git-tag-version` sets it and updates `package-lock.json`. The commit touches only those two files, and the changelog where there is one, and its whole message is `Version X.Y.Z`.
 - **Changelog:** `auto`. When a `CHANGELOG.md` exists at the root or under `docs/`, the version commit also carries a new section for its number; the scan names the file. A path here names it outright, and `off` never touches one.
 - **Checks:** the `lint`, `typecheck`, `check`, `test` and `build` scripts that `package.json` defines, whichever exist, run for what changed. The scan lists them. Add any other command here.
@@ -65,7 +64,7 @@ The one block to adapt for a project. The steps below read it, and `scripts/scan
 
 ## How the pieces fit
 
-- **Baseline.** The review covers everything after it: the range commits, the working tree, staged or not, and untracked files. With version commits, the baseline is the newest well-formed one, since a run ends at its report and everything below has been reviewed. Without, it is where the last run on this branch ended, which step 8 records in the clone's git config as `branch.<name>.reviewed` and the scan reads back while that commit is still on the branch; before any run, it is the newest pushed commit, or the root when nothing is pushed.
+- **Baseline.** The review covers everything after it: the range commits, the working tree, staged or not, and untracked files. With version commits, the baseline is the newest well-formed one, since a run ends at its report and everything below has been reviewed. Without, it is the newest pushed commit, or the root when nothing is pushed: pushing is what closes a run, and until a run's commits are pushed the next run reviews them again, which is also what brings a commit made outside a run under review.
 - **Well-formed version commit.** All of these hold, each read from the commit itself: its whole message is exactly the version message, with no body and no trailer; it touches only the version files, and the version file among them; the version file at that commit reads the number in the message; and, with a changelog, it touches that too and the changelog's newest section at that commit is headed with the number. Anything else is an ordinary commit however much it looks like one: a subject that mentions a version, a bump made by hand, the right message with a trailer under it. The scan marks these lookalikes, and they are reviewed like any range commit.
 - **Rewritable.** A commit may be rewritten only if it is after the baseline and not reachable from any remote branch. The scan prints the rewrite base. Pushed commits in the range are still reviewed, and their problems reported.
 - **Order.** Plan the batch before staging anything. Fixes to existing commits first, then the new commits, then the prose commits for the maintained docs if needed, then the version commit, last.
@@ -166,8 +165,6 @@ Decide the whole batch before staging anything. Take the scan's **Working tree**
 
 Run the scan again. `git status` lists only the files deliberately left out; the new version commit, if any, shows as the baseline; no range subject begins `fixup!` or `amend!`. Reread the final messages.
 
-Then record where the run ended, with the branch name and the hash written out: `git config branch.<name>.reviewed <hash of HEAD>`. It is local to the clone and never pushed, and the next run on this branch starts after it. The scan ignores it once the branch no longer holds that commit, and `git config --unset branch.<name>.reviewed` clears it.
-
 Then report, briefly:
 
 - first, what the review flagged: problems in pushed commits that could not be fixed, anything committed over a failed check on the user's say-so, a credential kept and why
@@ -175,8 +172,8 @@ Then report, briefly:
 - the version change and changelog section, if any, and any doc claim only the user can confirm
 - files left uncommitted, each with the reason
 - the checks that ran, with their results
-- the undo point: nothing was pushed, and `git reset --soft <starting hash>` returns the branch to where it stood with every change the run made left staged, after which the scan ignores the recorded end of the run
+- the undo point: nothing was pushed, and `git reset --soft <starting hash>` returns the branch to where it stood with every change the run made left staged. Without version commits, say too that pushing is what closes the run: until then, the next run reviews these commits again.
 
 ## 9. After the report
 
-The run ends with the report. Anything the user asks for next in the same thread is ordinary development, not part of the run: make and commit that work as usual, with the session's attribution trailer, and stop there. Do not bump the version or make a version commit, even when the follow-up comes straight after one, and do not move the recorded end of the run, so the next run reviews that work. The next batch gets its own `/commit`, which the user starts in a fresh thread so the review begins from a clean context. If follow-up work leaves a batch ready to go, say so instead.
+The run ends with the report. Anything the user asks for next in the same thread is ordinary development, not part of the run: make and commit that work as usual, with the session's attribution trailer, and stop there. Do not bump the version or make a version commit, even when the follow-up comes straight after one; the next run reviews that work. The next batch gets its own `/commit`, which the user starts in a fresh thread so the review begins from a clean context. If follow-up work leaves a batch ready to go, say so instead.
