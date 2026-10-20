@@ -167,6 +167,11 @@ const operations = [
 ].filter(([name]) => existsSync(git('rev-parse', '--git-path', name))).map(([, label]) => label);
 const userName = tryGit('config', 'user.name');
 const remotes = lines(tryGit('remote') ?? '');
+// Where the last run on this branch ended, which the skill records in the clone's git config. It
+// counts only while that commit is still on the branch: a rewrite below it leaves it dangling.
+const reviewedSetting = branch ? tryGit('config', '--get', `branch.${branch}.reviewed`) : null;
+const reviewedSha = reviewedSetting ? tryGit('rev-parse', '-q', '--verify', `${reviewedSetting}^{commit}`) : null;
+const reviewed = reviewedSha && tryGit('merge-base', '--is-ancestor', reviewedSha, 'HEAD') !== null ? reviewedSha : null;
 
 // Pushed means reachable from any remote-tracking branch; only commits outside that set can be
 // rewritten. With no remote, nothing is pushed.
@@ -174,7 +179,7 @@ const unpushed = new Set(hasHead ? lines(git('rev-list', 'HEAD', '--not', '--rem
 const firstParent = hasHead ? lines(git('rev-list', '--first-parent', 'HEAD')) : [];
 const pushedTip = firstParent.find((sha) => !unpushed.has(sha)) ?? null;
 
-// --- Baseline: the newest well-formed version commit, else the newest pushed commit --------------
+// --- Baseline: the newest version commit, else where the last run ended, else the pushed tip ------
 
 const versionFiles = new Set([VERSION_FILE, ...VERSION_FILES, changelog].filter(Boolean));
 const candidates = hasHead && VERSION_FILE
@@ -202,7 +207,7 @@ const versionDefect = ({ sha, author, message }) => {
 };
 const official = candidates.find((candidate) => versionDefect(candidate) === null) ?? null;
 const officialVersion = official ? VERSION_MESSAGE.exec(official.message)[1] : null;
-const baseline = official?.sha ?? pushedTip;
+const baseline = official?.sha ?? reviewed ?? pushedTip;
 const rewriteBase = baseline && !unpushed.has(baseline) ? pushedTip : baseline;
 const diffBase = baseline ?? EMPTY_TREE;
 
@@ -445,7 +450,7 @@ const attention = [
   ...large.map((item) => `large file added: ${item}`),
   ...stagedLeftAlone.map((path) => `staged, but in Leave alone: ${path}`),
   ...(!baseline && commits.length > LONG_RANGE
-    ? [`${count(commits.length, 'commit')} with no baseline: nothing is pushed and there is no version commit, so the range is the whole history`] : []),
+    ? [`${count(commits.length, 'commit')} with no baseline: nothing is pushed, no run has ended here and there is no version commit, so the range is the whole history`] : []),
 ];
 
 const out = [];
@@ -466,9 +471,12 @@ say(`Git user: ${userName ?? '(unset)'}`);
 if (!hasHead) say('No commits yet: the whole working tree is the first batch');
 say(`Baseline: ${official
   ? `${short(official.sha)} ${official.message} (${unpushed.has(official.sha) ? 'unpushed' : 'pushed'} version commit)`
-  : pushedTip
-    ? `${short(pushedTip)} ${git('log', '-1', '--format=%s', pushedTip)} (newest pushed commit; no version commit yet)`
-    : '(root: no version commit and nothing pushed)'}`);
+  : reviewed
+    ? `${short(reviewed)} ${git('log', '-1', '--format=%s', reviewed)} (where the last run ended, from branch.${branch}.reviewed; no version commit yet)`
+    : pushedTip
+      ? `${short(pushedTip)} ${git('log', '-1', '--format=%s', pushedTip)} (newest pushed commit; no run has ended here and no version commit yet)`
+      : '(root: no version commit, no run has ended here and nothing is pushed)'}`);
+if (reviewedSetting && !reviewed) say(`Recorded end of the last run: branch.${branch}.reviewed is ${reviewedSetting}, which is not on this branch; ignored`);
 say(`Rewrite base: ${rewriteBase ? short(rewriteBase) : '(root)'}; only commits after it may be rewritten`);
 say(`Versioning: ${versioning}`);
 say(`Changelog: ${changelog ? `${changelog}, newest section ${changelogNow ?? '(none)'}` : 'none'}`);

@@ -29,6 +29,10 @@ publish or an `npx` download therefore goes through the session's usual permissi
 
 ## What a run does
 
+The review covers everything after the baseline: the last version commit where the project
+keeps them, otherwise where the previous run on the branch ended, and before any run the newest
+pushed commit.
+
 1. **Survey.** Fetches, runs `scripts/scan.mjs`, and stops on anything that needs the user: an
    operation in progress, a detached HEAD, a protected branch, a version changed by hand,
    credentials in added lines, files that look like they should not be tracked.
@@ -46,7 +50,8 @@ publish or an `npx` download therefore goes through the session's usual permissi
    only the version files, no trailer. Where the project has a changelog, the commit also
    carries a new section for the number. It is the next run's baseline.
 7. **Report.** Flags first, then each commit, what was left out and why, the checks that ran, and
-   the undo point. Nothing is pushed.
+   the undo point. The run records where it ended in the clone's git config, so the next run on
+   the branch starts after it. Nothing is pushed.
 
 ## Settings
 
