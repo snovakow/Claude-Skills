@@ -57,6 +57,14 @@ costs nothing and a commit made by hand is still reviewed at the next release.
 7. **Report.** Flags first, then each commit, what was left out and why, the checks that ran, and
    the undo point. Nothing is pushed.
 
+## With the other skills
+
+A milestone of an execution plan (`/execution-runbook` writes one, `/executioner` runs it) is one
+or a few ordinary content commits made by the milestone's thread; this skill is the release the
+plan's Commit lines name afterwards. It runs in a fresh thread, as its rules say, with the version
+passed once at a release line's first release and left to the bump after that, and the next
+milestone's review reads the changelog section it wrote for what the review corrected.
+
 ## Settings
 
 Two places hold the settings and must agree: the **Project settings** block at the top of
