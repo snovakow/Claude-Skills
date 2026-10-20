@@ -21,11 +21,12 @@ cp -R skills/commit /path/to/project/.claude/skills/commit
 A copy at `~/.claude/skills/commit` works in every project; a project copy is the one to adapt.
 `SKILL.md` names the scan as `${CLAUDE_SKILL_DIR}/scripts/scan.mjs`, and Claude Code substitutes
 the skill's own folder for that variable, so the path holds wherever the skill is installed.
-The skill runs by hand only, at Opus and max effort, and expects a fresh thread per batch so the
-review starts from a clean context. The scan needs Node 18 or later and nothing else. The
-skill's `allowed-tools` pre-approve the commands that change something in a run, such as
-staging, committing and rebasing, and nothing broader; read-only git needs no grant. A push, a
-publish or an `npx` download therefore goes through the session's usual permission check.
+The skill runs by hand only, at Opus and max effort, and stops unless `/commit` is the first thing
+in its thread, so the review starts from a clean context. The scan needs Node 18 or later and
+nothing else. The skill's `allowed-tools` pre-approve the commands that change something in a
+run, such as staging, committing and rebasing, and nothing broader; read-only git needs no
+grant. A push, a publish or an `npx` download therefore goes through the session's usual
+permission check.
 
 ## What a run does
 

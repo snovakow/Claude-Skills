@@ -58,7 +58,8 @@ The one block to adapt for a project. The steps below read it, and `scripts/scan
 
 ## Rules that hold throughout
 
-- Never push. Never create, switch or delete a branch. Never run anything that discards the user's work: no `git reset --hard`, no `git checkout -- <file>` over their edits, no `git clean`, no `git stash drop`.
+- Run in a fresh thread, as the first thing in it. A thread that made the changes under review remembers making them and cannot review them from the repository alone, and one that has already run this would run it again over the same work. So if anything precedes this command in the conversation, an earlier message, work done here or a summary carried over from a longer context, stop before anything is read or run, and say to start a new thread with `/commit` as its first message.
+- Never push. Never create, switch or delete a branch, and never clone or copy the repository to rehearse a step: the checks on each step and the undo point are the safety net. Never run anything that discards the user's work: no `git reset --hard`, no `git checkout -- <file>` over their edits, no `git clean`, no `git stash drop`.
 - Never rewrite a pushed commit, or anything at or below the baseline. A problem there is reported, not fixed; a fix to pushed work is a new commit.
 - Note `git rev-parse HEAD` before changing anything and give it in the report as the undo point.
 - The file is the unit. Splitting hunks needs interactive staging, which is not available here, so two unrelated changes in one file go in one commit whose message covers both, or ask whether to hold one back.
@@ -76,7 +77,7 @@ The one block to adapt for a project. The steps below read it, and `scripts/scan
 
 ## 1. Survey
 
-Run `git fetch --quiet` so pushed state is current; if it fails, say so and go on. Then run the scan, which is read-only:
+With the thread fresh, run `git fetch --quiet` so pushed state is current; if it fails, say so and go on. Then run the scan, which is read-only:
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/scan.mjs
