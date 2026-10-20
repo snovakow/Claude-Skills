@@ -63,7 +63,7 @@ the scan reads.
 | A changelog the version commit carries a section in | Changelog | `CHANGELOG` | `auto`: `CHANGELOG.md` at the root or under `docs/` |
 | Commands to run before committing | Checks | (lists package.json scripts) | lint, typecheck, check, test, build where defined |
 | Paths the skill never stages | Leave alone | `LEAVE_ALONE` | none |
-| Prose the skill keeps true | Maintained docs | (`README.md` and `docs/`) | `README.md`, `docs/` |
+| Prose the skill keeps true | Maintained docs | `DOCS` | `README.md`, `docs/` |
 | Names that must not appear in public | Never mention | `NEVER_MENTION` | none |
 | Files that should not be tracked | (none) | `JUNK`, `LARGE_FILE` | common build and local files, 1 MB |
 
@@ -129,6 +129,9 @@ diff <(sed -n '1,/^\/\/ --- Patterns/p' skills/commit/scripts/scan.mjs | grep -o
 The first diff is the frontmatter, the second the generic body below the settings, the third
 the scan below its settings. Differences that are the project's own additions stay; the rest
 is drift to carry over, after which the copy's `metadata.baseline` is set to this file's.
+This repository's own copy at `.claude/skills/commit/` is the first project copy. Everything it
+adds is a setting's value or one of its own rules, kept in a section above the generic body, so
+here the recipe compares none of it and prints only the baseline dates.
 
 ## The scan on its own
 

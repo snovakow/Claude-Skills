@@ -14,7 +14,9 @@ Claude skills to accelerate and enhance project workflow by compiling static roa
 This repository is the baseline that project copies are checked against as models, effort
 levels, agent fields and tool syntax change. Each skill's frontmatter carries
 `metadata.baseline`, the date of the baseline a copy was adapted from, and each skill's README
-says how to compare a copy and bring it up to date.
+says how to compare a copy and bring it up to date. This repository's own commits are made with
+its copy at [.claude/skills/commit/](.claude/skills/commit/), the first project copy and a worked
+example of the comparison.
 
 ## Install
 
