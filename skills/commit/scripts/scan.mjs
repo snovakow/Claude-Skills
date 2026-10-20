@@ -36,6 +36,9 @@ const LEAVE_ALONE = [];
 // Words that must not appear in anything that becomes public, matched without regard to case in
 // every added line and message: private hosts, customers, people, outside sites.
 const NEVER_MENTION = [];
+// Prose the skill keeps true, as git pathspecs. Their backticked paths are checked against the
+// tree, and files that came or went since the baseline are listed beside them.
+const DOCS = ['README.md', 'docs'];
 // Files that usually should not be tracked, checked against the files added since the baseline.
 const JUNK = [
   /(^|\/)\.DS_Store$/, /(^|\/)Thumbs\.db$/, /(^|\/)\.env(\.[\w-]+)?$/,
@@ -225,7 +228,9 @@ const commits = rangeShas.map((sha) => {
   if (VAGUE_SUBJECT.test(subject)) problems.push('vague subject');
   if (FILE_SUBJECT.test(subject)) problems.push('subject names a file rather than a change');
   if (second.trim()) problems.push('no blank line after the subject');
-  if (VERSION_MESSAGE.test(message)) {
+  if (!VERSION_FILE) {
+    if (VERSION_LOOKALIKE.test(subject)) problems.push('subject reads like a version commit; this project keeps none');
+  } else if (VERSION_MESSAGE.test(message)) {
     problems.push(`has a version commit's message, but ${versionDefect({ sha, author, message }) ?? 'it sits above the baseline'}; reviewed as an ordinary commit`);
   } else if (VERSION_MESSAGE.test(subject)) {
     problems.push("has a version commit's subject with a body or trailer under it; not a version commit");
@@ -374,7 +379,7 @@ const large = [...addedPaths].map((path) => [path, fileSize(path)])
 
 // --- Docs: the prose the skill maintains ---------------------------------------------------------
 
-const docFiles = [...new Set(['README.md', ...lines(tryGit('ls-files', '--cached', '--others', '--exclude-standard', '--', 'docs') ?? '')])]
+const docFiles = [...new Set(DOCS.length ? lines(tryGit('ls-files', '--cached', '--others', '--exclude-standard', '--', ...DOCS) ?? '') : [])]
   .filter((file) => PROSE_FILE.test(file) && existsSync(file));
 // A backticked span that reads as a repo path and names nothing on disk.
 const SPAN = /`([^`\n]+)`/g;
