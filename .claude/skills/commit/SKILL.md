@@ -24,7 +24,7 @@ allowed-tools:
   - Bash(npm version * --no-git-tag-version)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/scan.mjs *)
 metadata:
-  baseline: 2026-10-20
+  baseline: 2026-10-21
 ---
 
 # Commit a reviewed batch
@@ -57,14 +57,14 @@ The one block to adapt for a project. The steps below read it, and `scripts/scan
 
 ## Rules that hold throughout
 
-- Run in a fresh thread, as the first thing in it. A thread that made the changes under review remembers making them and cannot review them from the repository alone, and one that has already run this would run it again over the same work. So if anything precedes this command in the conversation, an earlier message, work done here or a summary carried over from a longer context, stop before anything is read or run, and say to start a new thread with `/commit` as its first message.
+- Run in a fresh thread, as the first thing in it. A thread that made the changes under review remembers making them and cannot review them from the repository alone, and one that has already run this would run it again over the same work. So if anything precedes this command in the thread, an earlier message, work done here or a summary carried over from a longer context, stop before anything is read or run, and say to start a new thread with `/commit` as its first message.
 - Never push. Never create, switch or delete a branch, and never clone or copy the repository to rehearse a step: the checks on each step and the undo point are the safety net. Never run anything that discards the user's work: no `git reset --hard`, no `git checkout -- <file>` over their edits, no `git clean`, no `git stash drop`.
 - Never rewrite a pushed commit, or anything at or below the baseline. A problem there is reported, not fixed; a fix to pushed work is a new commit.
 - Note `git rev-parse HEAD` before changing anything and give it in the report as the undo point.
 - The file is the unit. Splitting hunks needs interactive staging, which is not available here, so two unrelated changes in one file go in one commit whose message covers both, or ask whether to hold one back.
 - Stage explicit paths, never `-A` or `.`. Before each commit, check `git diff --cached --stat` against its subject, and unstage what does not belong with `git restore --staged <path>` rather than widen the message.
 - Never delete the user's files or edit `.gitignore` without asking. An untracked file that does not belong in the repository is reported, not committed.
-- Keep message files outside the repository, in the session's scratchpad directory, so they can never be committed.
+- Keep message files outside the repository, in the thread's scratchpad directory, so they can never be committed.
 - If a hook rejects a commit, fix the cause and commit again rather than bypass it.
 
 ## How the pieces fit
@@ -103,7 +103,7 @@ Read every range commit with `git show`, the working-tree diff with `git diff HE
 - a commit whose diff does not match its message, or that holds more than one concern
 - comments and docs whose claims the code does not bear out; fix any that overstate or misattribute what the code does
 - references a reader of the public repository cannot follow: private hosts, local paths, customers, test data by name, "the spec". Write the structural fact the sentence needed instead, in the project's own terms.
-- leftovers that look accidental: debug output, commented-out code, notes written for this session
+- leftovers that look accidental: debug output, commented-out code, notes written for this thread
 - files that should not be tracked: build output, data dumps, logs, local settings
 - anything on the Never-mention list. The scan greps for the words; a name written another way needs reading, so go through **Prose to read** and every message yourself.
 
@@ -125,7 +125,7 @@ Match the history; the scan prints the newest subjects at and below the baseline
 
 Rewrite a rewritable commit's message only when it names something private, has a file-name or vague subject ("Update App.tsx", "wip", "fix"), or does not match its diff. Leave good messages alone. Keep each commit's author, and the trailers a reworded commit already has.
 
-New commits other than the version commit end with the attribution trailer this session's instructions ask for, if any. The version commit never carries one.
+New commits other than the version commit end with the attribution trailer this thread's instructions ask for, if any. The version commit never carries one.
 
 No other commit's subject may read like a version commit's, since the baseline depends on that shape being unique: reword a rewritable one to say what it changed.
 
@@ -184,7 +184,7 @@ Then report, briefly:
 
 The run ends with the report. Anything the user asks for next, in this thread or another, is development work, not part of the run, and how it is kept depends on how the run ended:
 
-- **With a version commit.** Make and commit that work as usual, with the session's attribution trailer, and stop there. These are ordinary commits, not the skill's: they carry no version bump, so the next run finds them above its baseline and reviews them. Do not bump the version or make a version commit, even when the follow-up comes straight after one.
+- **With a version commit.** Make and commit that work as usual, with the thread's attribution trailer, and stop there. These are ordinary commits, not the skill's: they carry no version bump, so the next run finds them above its baseline and reviews them. Do not bump the version or make a version commit, even when the follow-up comes straight after one.
 - **Without one.** Make the change and commit none of it: leave it in the working tree, where the next run reviews it with the rest. Nothing in the history marks where a run without a version commit ended, so a commit made now could not be told from the run's own, and the next run could not know it was never reviewed.
 
 The next batch gets its own `/commit`, which the user starts in a fresh thread so the review begins from a clean context. If follow-up work leaves a batch ready to go, say so instead.

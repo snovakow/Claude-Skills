@@ -21,7 +21,7 @@ allowed-tools:
   - Bash(git worktree list *)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs *)
 metadata:
-  baseline: 2026-10-20
+  baseline: 2026-10-21
 ---
 
 # Run an execution plan
@@ -34,7 +34,7 @@ This thread is the plan's executioner for the whole run. It hands each milestone
 
 ## Rules that hold throughout
 
-- Run as the first thing in the thread, and keep the thread open for the run. Its context will be summarised over a long run, so the plan file is the state: at the start of every turn, re-read §0, the progress table and the milestone in progress from the file before judging anything, and write every decision into the file rather than keeping it in memory. This file, `${CLAUDE_SKILL_DIR}/SKILL.md`, is re-read the same way when its rules are no longer in context. The thread's own session id is `${CLAUDE_SESSION_ID}`, which the harness fills in here, and the tail script leaves that transcript out when told it.
+- Run as the first thing in the thread, and keep the thread open for the run. Its context will be summarised over a long run, so the plan file is the state: at the start of every turn, re-read §0, the progress table and the milestone in progress from the file before judging anything, and write every decision into the file rather than keeping it in memory. This file, `${CLAUDE_SKILL_DIR}/SKILL.md`, is re-read the same way when its rules are no longer in context. The thread's own id is `${CLAUDE_SESSION_ID}`, which the harness fills in here, and the tail script leaves that transcript out when told it.
 - Read-only, with or without plan mode. The executioner changes nothing but the plan file. Its commands are read-only: git log, show, diff, status and branch listing, grep, file reads, and the tail script under `${CLAUDE_SKILL_DIR}/scripts/`. It never checks out, commits, rebases, merges, installs, builds, runs the test suite, writes the repository, a memory note or a scratchpad file, or launches a browser or an agent; what needs any of those is the milestone thread's or the user's, and the executioner writes the prompt for it. Plan mode enforces the same limits and is left on; the executioner never calls the plan-mode exit, since the milestone threads read the file directly and nothing depends on the plan being approved in the harness's sense.
 - Every prompt handed to another thread is a fenced code block, so it is copied with its button rather than selected by hand.
 - Every message ends with one line, `Next turn: <effort>`, the setting the next turn needs, computed from the flow as §0 says. The progress table in the plan carries the same line, so it survives a summarised context.

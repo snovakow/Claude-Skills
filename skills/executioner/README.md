@@ -27,7 +27,7 @@ the setup and from the first handoff, with the few reviews the plan names at xhi
 setup that must write §0 or reconcile the plan with the tree. Max is never dictated: Fable at max
 is the heaviest setting there is, and the effort is decided from the plan at run time rather than
 fixed in the skill. Its `allowed-tools` pre-approve, for the invoking turn, read-only git, edits
-under `~/.claude/plans`, and the script below; the later turns run under the session's
+under `~/.claude/plans`, and the script below; the later turns run under the thread's
 permission mode, which is why plan mode is the fit: it holds the thread to the same limits. The
 skill never asks for anything that changes the repository. The script needs Node 18 or later and
 nothing else.
@@ -66,7 +66,7 @@ line; an xhigh turn at any other setting stops and asks for the change.
 
 `scripts/tail.mjs` finds and reads another thread's transcript, and changes nothing.
 `--find "<text>" --cwd <dir>` lists the project's transcripts whose text holds the words, newest
-first, leaving this session's own out; `<transcript> --last <n>` prints the last assistant
+first, leaving this thread's own out; `<transcript> --last <n>` prints the last assistant
 messages, any question they posed, and the model and effort they ran at. Transcripts live under
 `~/.claude/projects/<folder>`, the folder being the working directory with every character that
 is not a letter or a digit replaced by `-`.

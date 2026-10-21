@@ -25,7 +25,7 @@ allowed-tools:
   - Bash(code -r *)
   - Bash(open -a "Visual Studio Code" *)
 metadata:
-  baseline: 2026-10-20
+  baseline: 2026-10-21
 ---
 
 # Write an execution plan
@@ -112,7 +112,7 @@ Write it in this order. Headings are the sections; bold run-in labels are the pa
 
 **§2. The design in one place.** What every milestone builds toward: the document or data shape, the behaviour, the rendering or runtime path, the interaction, the scripting surface, the editor's side, the demos, each a paragraph a milestone can point at for the part it lands.
 
-**§3. Milestones.** Open with: numbered and listed in execution order, M1 through M<n>, each run after the one above it is committed and released; the order's logic in a sentence; what each gives; "Fresh thread" means a new session with the prompt as its first message. Then each milestone:
+**§3. Milestones.** Open with: numbered and listed in execution order, M1 through M<n>, each run after the one above it is committed and released; the order's logic in a sentence; what each gives; "Fresh thread" means a new thread with the prompt as its first message. Then each milestone:
 
 - Heading: `### M<n>. <what it lands> — <branch>` with ` — pipeline change (<why>)` where it is one, `(no project code; <the other repository>)` where it lands none, `(stretch)` or `(optional)` where it is.
 - **Seams.** (or **Design.**, **Fields.**, **Where.**, as the milestone needs): the files and functions by name, the precedent's touched files, what is settled from a dependency's source and recorded in a module header, what is left out and why.

@@ -3,10 +3,10 @@
 // tail, so the executioner reads a milestone thread's report without loading the whole file into
 // its own context. It reads files and changes nothing. Node 18 or later, no dependencies.
 //
-//     node tail.mjs --find "<text>" [--cwd <dir>] [--not <session id>]
+//     node tail.mjs --find "<text>" [--cwd <dir>] [--not <thread id>]
 //         list the transcripts of the project at <dir> (the working directory by default) whose
-//         text holds <text>, newest first, leaving out the session named by --not (this thread's
-//         own id; the session id in the environment when --not is omitted)
+//         text holds <text>, newest first, leaving out the thread named by --not (this thread's
+//         own id; the id in the environment when --not is omitted)
 //     node tail.mjs <transcript.jsonl> [--last <n>]
 //         print the text of the last <n> assistant messages (default 2): their prose, any question
 //         they posed with AskUserQuestion, and the user message that followed if any; then the

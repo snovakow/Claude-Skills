@@ -25,7 +25,7 @@ The skill runs by hand only, at Opus and max effort, and stops unless `/commit` 
 in its thread, so the review starts from a clean context. The scan needs Node 18 or later and
 nothing else. The skill's `allowed-tools` pre-approve the commands that change something in a
 run, such as staging, committing and rebasing, and nothing broader; read-only git needs no
-grant. A push, a publish or an `npx` download therefore goes through the session's usual
+grant. A push, a publish or an `npx` download therefore goes through the thread's usual
 permission check.
 
 ## What a run does
