@@ -49,3 +49,11 @@ in every project, then run it by name:
 ```bash
 cp -R skills/commit /path/to/project/.claude/skills/commit
 ```
+
+## Instructions
+
+- [claude-ai.txt](instructions/claude-ai.txt) — the text of the Instructions for Claude setting in
+  claude.ai, under Settings > Account, which applies across the account. The file is the source:
+  edit it here, commit it, then copy it into the field with `pbcopy < instructions/claude-ai.txt`.
+  It holds exactly what the field holds, line breaks included, and nothing else, so it keeps its
+  own wrapping rather than this repository's.
