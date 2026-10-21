@@ -55,7 +55,9 @@ costs nothing and a commit made by hand is still reviewed at the next release.
    only the version files, no trailer. Where the project has a changelog, the commit also
    carries a new section for the number. It is the next run's baseline.
 7. **Report.** Flags first, then each commit, what was left out and why, the checks that ran, and
-   the undo point. Nothing is pushed.
+   the undo point. Nothing is pushed. What is asked for afterwards is development work: after a
+   version commit it may be committed above it as ordinary commits, which the next run reviews;
+   without one it is left uncommitted, since nothing would tell such a commit from the run's own.
 
 ## With the other skills
 

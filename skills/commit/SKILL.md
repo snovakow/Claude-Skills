@@ -177,4 +177,9 @@ Then report, briefly:
 
 ## 9. After the report
 
-The run ends with the report. Anything the user asks for next in the same thread is ordinary development, not part of the run: make and commit that work as usual, with the session's attribution trailer, and stop there. Do not bump the version or make a version commit, even when the follow-up comes straight after one; the next run reviews that work. The next batch gets its own `/commit`, which the user starts in a fresh thread so the review begins from a clean context. If follow-up work leaves a batch ready to go, say so instead.
+The run ends with the report. Anything the user asks for next, in this thread or another, is development work, not part of the run, and how it is kept depends on how the run ended:
+
+- **With a version commit.** Make and commit that work as usual, with the session's attribution trailer, and stop there. These are ordinary commits, not the skill's: they carry no version bump, so the next run finds them above its baseline and reviews them. Do not bump the version or make a version commit, even when the follow-up comes straight after one.
+- **Without one.** Make the change and commit none of it: leave it in the working tree, where the next run reviews it with the rest. Nothing in the history marks where a run without a version commit ended, so a commit made now could not be told from the run's own, and the next run could not know it was never reviewed.
+
+The next batch gets its own `/commit`, which the user starts in a fresh thread so the review begins from a clean context. If follow-up work leaves a batch ready to go, say so instead.
