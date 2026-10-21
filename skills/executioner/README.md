@@ -22,14 +22,14 @@ cp -R skills/executioner /path/to/project/.claude/skills/executioner
 
 A copy at `~/.claude/skills/executioner` works in every project. The skill runs by hand only, on
 the model and effort the user sets, and its setup message says what they should be: the strongest
-model the account has, Fable 5.1 where the plan includes it, otherwise Opus 5.5; high for the
-setup and from the first handoff, with the few reviews the plan names at xhigh, and xhigh for a
+model the account has, Fable 5.1 where the user's plan includes it, otherwise Opus 5.5; high for
+the setup and from the first handoff, with the few reviews the plan names at xhigh, and xhigh for a
 setup that must write §0 or reconcile the plan with the tree. Max is never dictated: Fable at max
 is the heaviest setting there is, and the effort is decided from the plan at run time rather than
 fixed in the skill. Its `allowed-tools` pre-approve, for the invoking turn, read-only git, edits
-under `~/.claude/plans`, and the two scripts below; the later turns run under the session's
+under `~/.claude/plans`, and the script below; the later turns run under the session's
 permission mode, which is why plan mode is the fit: it holds the thread to the same limits. The
-skill never asks for anything that changes the repository. The scripts need Node 18 or later and
+skill never asks for anything that changes the repository. The script needs Node 18 or later and
 nothing else.
 
 Without a path, the skill takes the newest execution plan under `~/.claude/plans`, and asks when
@@ -62,25 +62,14 @@ only where the message has just handed over a prompt whose review runs at xhigh,
 rewrite. At the start of each turn the thread checks the effort the harness shows against that
 line; an xhigh turn at any other setting stops and asks for the change.
 
-## Scripts
+## The script
 
-Both are read-only.
-
-- `scripts/tail.mjs` finds and reads another thread's transcript. `--find "<text>" --cwd <dir>`
-  lists the project's transcripts whose text holds the words, newest first, leaving this session's
-  own out; `<transcript> --last <n>` prints the last assistant messages, any question they posed,
-  and the model and effort they ran at. Transcripts live under `~/.claude/projects/<folder>`, the
-  folder being the working directory with every character that is not a letter or a digit
-  replaced by `-`.
-- `scripts/models.mjs` names the strongest model the account can run, from the model catalog
-  Claude Code caches under `~/.claude/cache/model-catalog` and the two model-access entries of the
-  account file it reads (which models the account is entitled to, and the picker's wording for the
-  Fable option, "Requires usage credits" where Fable bills to credits), with the defaults in
-  `~/.claude/settings.json` and the effort this session runs at. It prints nothing else from those
-  files. Fable counts as available only where it is listed, entitled and draws on the plan's own
-  limits; otherwise Opus 5.5 is dictated. Without a cached catalog it says so, and the skill states
-  the strongest model available instead of detecting it. Both caches are Claude Code's own and may
-  change shape between versions; the script then reports what it could not read.
+`scripts/tail.mjs` finds and reads another thread's transcript, and changes nothing.
+`--find "<text>" --cwd <dir>` lists the project's transcripts whose text holds the words, newest
+first, leaving this session's own out; `<transcript> --last <n>` prints the last assistant
+messages, any question they posed, and the model and effort they ran at. Transcripts live under
+`~/.claude/projects/<folder>`, the folder being the working directory with every character that
+is not a letter or a digit replaced by `-`.
 
 ## With the other skills
 
@@ -101,7 +90,6 @@ COPY=/path/to/project/.claude/skills/executioner
 grep -n 'baseline:' skills/executioner/SKILL.md "$COPY/SKILL.md"
 diff skills/executioner/SKILL.md "$COPY/SKILL.md"
 diff skills/executioner/scripts/tail.mjs "$COPY/scripts/tail.mjs"
-diff skills/executioner/scripts/models.mjs "$COPY/scripts/models.mjs"
 ```
 
 Differences that are the project's own additions stay; the rest is drift to carry over, after

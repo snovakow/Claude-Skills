@@ -22,7 +22,7 @@ cp -R skills/execution-runbook /path/to/project/.claude/skills/execution-runbook
 
 A copy at `~/.claude/skills/execution-runbook` works in every project. The skill runs by hand only,
 on the model and effort the thread is set to. It sizes the job from its survey and says what the
-brief calls for: the strongest model the account has, Fable 5.1 where the plan includes it,
+brief calls for: the strongest model the account has, Fable 5.1 where the user's plan includes it,
 otherwise Opus 5.5, at high for a brief within one area and xhigh for one that spans areas,
 branches or a pipeline change, never max; below that setting it stops and waits for the change.
 Its `allowed-tools` pre-approve, for the invoking turn, read-only git, the Explore and Plan
