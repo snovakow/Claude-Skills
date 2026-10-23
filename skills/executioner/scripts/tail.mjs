@@ -8,9 +8,10 @@
 //         text holds <text>, newest first, leaving out the thread named by --not (this thread's
 //         own id; the id in the environment when --not is omitted)
 //     node tail.mjs <transcript.jsonl> [--last <n>]
-//         print the text of the last <n> assistant messages (default 2): their prose, any question
-//         they posed with AskUserQuestion, and the user message that followed if any; then the
-//         model, effort and time of the last assistant message
+//         print the text of the last <n> replies (default 2): the assistant's prose, any question
+//         it posed with AskUserQuestion, and the output of a command run directly in the thread,
+//         such as a forked skill the user typed; with the messages a person typed after them; then
+//         the model, effort and time of the last assistant message
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,7 +26,7 @@ const file = args.find((a, i) => !a.startsWith('--') && (i === 0 || !args[i - 1]
 // The transcripts of a project live under ~/.claude/projects/<folder> (or under CLAUDE_CONFIG_DIR),
 // where <folder> is the working directory with every character that is not a letter or a digit
 // replaced by '-'. The record shape inside a transcript is internal to Claude Code and may change;
-// only text blocks, questions posed and a few labelled fields are read here.
+// only text blocks, questions posed, command output and a few labelled fields are read here.
 const configDir = process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude');
 const projectFolder = (cwd) => join(configDir, 'projects', cwd.replace(/[^A-Za-z0-9]/g, '-'));
 
@@ -85,10 +86,21 @@ if (option('--find') !== undefined) {
 if (!file) { console.error('usage: tail.mjs --find "<text>" [--cwd <dir>] [--not <id>]  |  tail.mjs <transcript.jsonl> [--last <n>]'); process.exit(2); }
 
 const last = Number(option('--last') ?? 2);
-const all = records(file).filter((r) => (r.type === 'user' || r.type === 'assistant') && !r.isSidechain);
-// Group the assistant's consecutive records into messages; a user record ends a message.
+// A command run directly in the thread, such as a forked skill the user typed, leaves no assistant
+// message: its output is a system record of subtype local_command.
+const isCommandOutput = (r) => r.type === 'system' && r.subtype === 'local_command';
+const all = records(file).filter((r) => (r.type === 'user' || r.type === 'assistant' || isCommandOutput(r)) && !r.isSidechain);
+// Group the assistant's consecutive records into messages; a user record or a command's output
+// ends a message.
 const messages = [];
 for (const r of all) {
+  if (isCommandOutput(r)) {
+    const top = messages[messages.length - 1];
+    if (top && top.role === 'assistant') top.closed = true;
+    const output = String(r.content ?? '').replace(/<\/?local-command-std(out|err)>/g, '');
+    messages.push({ role: 'command output', text: output, record: r });
+    continue;
+  }
   const text = textOf(r.message?.content);
   if (r.type === 'assistant') {
     const top = messages[messages.length - 1];
@@ -97,12 +109,16 @@ for (const r of all) {
   } else {
     const top = messages[messages.length - 1];
     if (top && top.role === 'assistant') top.closed = true;
+    // A skill's expanded text and the harness's caveats are marked isMeta: no person typed them.
+    if (r.isMeta) continue;
     // A user record that is only tool results carries no prose; keep the ones a person typed.
     if (text.trim() && !/^\[?tool_result/.test(text)) messages.push({ role: 'user', text, record: r });
   }
 }
-const assistantIdx = messages.map((m, i) => (m.role === 'assistant' && m.text.trim() ? i : -1)).filter((i) => i >= 0);
-const from = assistantIdx[Math.max(0, assistantIdx.length - last)] ?? messages.length;
+const replyIdx = messages.map((m, i) => (m.role !== 'user' && m.text.trim() ? i : -1)).filter((i) => i >= 0);
+let from = replyIdx[Math.max(0, replyIdx.length - last)] ?? messages.length;
+// A command's output is printed with the command typed before it.
+if (messages[from]?.role === 'command output' && messages[from - 1]?.role === 'user') from -= 1;
 for (const m of messages.slice(from)) {
   if (!m.text.trim()) continue; // tool calls alone, with no prose to print
   console.log(`\n#### ${m.role.toUpperCase()} ${m.record.timestamp ?? ''}\n${cut(m.text.trim())}`);

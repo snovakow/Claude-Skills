@@ -21,7 +21,7 @@ allowed-tools:
   - Bash(git worktree list *)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs *)
 metadata:
-  baseline: 2026-10-21
+  baseline: 2026-10-22
 ---
 
 # Run an execution plan
@@ -86,7 +86,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs --find "§3 M<n>" --cwd <project direc
 node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs <transcript> --last 2
 ```
 
-The first command lists the project's transcripts whose text holds the words, newest first, leaving this thread's own out; the newest not yet reviewed is the milestone's where it ran more than once. The second prints the last assistant messages, any question they posed, and the model and effort they ran at. Never load a whole transcript into this thread. Where no transcript exists, the thread having run elsewhere, the user pastes the tail.
+The first command lists the project's transcripts whose text holds the words, newest first, leaving this thread's own out; the newest not yet reviewed is the milestone's where it ran more than once. The second prints the last replies, the assistant's messages with any question they posed and the output of any command run directly in the thread, and the model and effort the assistant ran at. Never load a whole transcript into this thread. Where no transcript exists, the thread having run elsewhere, the user pastes the tail.
 
 Then, in this order:
 

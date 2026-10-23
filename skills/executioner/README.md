@@ -66,10 +66,11 @@ line; an xhigh turn at any other setting stops and asks for the change.
 
 `scripts/tail.mjs` finds and reads another thread's transcript, and changes nothing.
 `--find "<text>" --cwd <dir>` lists the project's transcripts whose text holds the words, newest
-first, leaving this thread's own out; `<transcript> --last <n>` prints the last assistant
-messages, any question they posed, and the model and effort they ran at. Transcripts live under
-`~/.claude/projects/<folder>`, the folder being the working directory with every character that
-is not a letter or a digit replaced by `-`.
+first, leaving this thread's own out; `<transcript> --last <n>` prints the last replies, which are
+the assistant's messages with any question they posed and the output of any command run directly
+in the thread, such as a forked skill the user typed, then the model and effort the assistant ran
+at. Transcripts live under `~/.claude/projects/<folder>`, the folder being the working directory
+with every character that is not a letter or a digit replaced by `-`.
 
 ## With the other skills
 
