@@ -12,21 +12,38 @@ settings blocks: one at the top of `SKILL.md`, and its twin at the top of the sc
 
 ## Install
 
-Copy the folder into the project and run `/commit` in Claude Code:
+Copy the folder into the project and run `/commit` in Claude Code. A copy is the usual install,
+since a project adapts the skill by editing its settings:
 
 ```bash
+mkdir -p /path/to/project/.claude/skills
 cp -R skills/commit /path/to/project/.claude/skills/commit
 ```
 
-A copy at `~/.claude/skills/commit` works in every project; a project copy is the one to adapt.
-`SKILL.md` names the scan as `${CLAUDE_SKILL_DIR}/scripts/scan.mjs`, and Claude Code substitutes
-the skill's own folder for that variable, so the path holds wherever the skill is installed.
-The skill runs by hand only, at Opus and max effort, and stops unless `/commit` is the first thing
-in its thread, so the review starts from a clean context. The scan needs Node 18 or later and
-nothing else. The skill's `allowed-tools` pre-approve the commands that change something in a
-run, such as staging, committing and rebasing, and nothing broader; read-only git needs no
-grant. A push, a publish or an `npx` download therefore goes through the thread's usual
-permission check.
+A project that runs the default settings can link the folder instead, from this repository's root,
+and then runs this repository's current version with no copy to keep current. The link is kept out
+of the project's history:
+
+```bash
+mkdir -p /path/to/project/.claude/skills
+ln -sn "$PWD/skills/commit" /path/to/project/.claude/skills/commit
+echo .claude/skills/commit >> /path/to/project/.git/info/exclude
+```
+
+A linked skill's settings are this repository's, and an edit made through the link edits them here:
+to adapt the skill, turn the link into a copy first, as the repository's
+[Install](../../README.md#install) describes. A link or copy at `~/.claude/skills/commit` is not
+recommended: it would run in place of every project's own `/commit`, each of which would then need a
+name of its own (see [Which one runs](../../README.md#which-one-runs)).
+
+`SKILL.md` names the scan as `${CLAUDE_SKILL_DIR}/scripts/scan.mjs`, and Claude Code substitutes the
+skill's own folder for that variable, so the path holds wherever the skill is installed, as a link
+or a copy. The skill runs by hand only, at Opus and max effort, and stops unless `/commit` is the
+first thing in its thread, so the review starts from a clean context. The scan needs Node 18 or
+later and nothing else. The skill's `allowed-tools` pre-approve the commands that change something
+in a run, such as staging, committing and rebasing, and nothing broader; read-only git needs no
+grant. A push, a publish or an `npx` download therefore goes through the thread's usual permission
+check.
 
 ## What a run does
 
@@ -137,8 +154,9 @@ Each project skill this one came from added one or more of these. They are the s
 
 ## Keeping a copy current
 
-This repository is the baseline. The frontmatter's `metadata.baseline` is the date of the
-baseline a copy was adapted from; Claude Code ignores the field, so it is free to carry that.
+This repository is the baseline; a project that links the skill runs the baseline itself and needs
+none of this. The frontmatter's `metadata.baseline` is the date of the baseline a copy was adapted
+from; Claude Code ignores the field, so it is free to carry that.
 What drifts over time is mostly in the frontmatter and the generic body: the `model` and
 `effort` values, agent and context fields, the permission-rule syntax in `allowed-tools`, the
 skill-directory variable, and the rules and steps themselves. A project's own additions live in

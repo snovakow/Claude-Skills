@@ -13,24 +13,38 @@ switches are dictated by the flow rather than remembered, and the thread never b
 
 ## Install
 
-Copy the folder into the project and run `/executioner <plan path>` as the first message of a
-fresh thread, in plan mode, from the project's directory:
+Link the folder into the project, or copy it there where the project adds rules of its own, and run
+`/executioner <plan path>` as the first message of a fresh thread, in plan mode, from the project's
+directory. A link, made from this repository's root, runs the skill as this repository has it, with
+no copy to keep current, and is kept out of the project's history:
 
 ```bash
+mkdir -p /path/to/project/.claude/skills
+ln -sn "$PWD/skills/executioner" /path/to/project/.claude/skills/executioner
+echo .claude/skills/executioner >> /path/to/project/.git/info/exclude
+```
+
+A copy, for a project's own version:
+
+```bash
+mkdir -p /path/to/project/.claude/skills
 cp -R skills/executioner /path/to/project/.claude/skills/executioner
 ```
 
-A copy at `~/.claude/skills/executioner` works in every project. The skill runs by hand only, on
-the model and effort the user sets, and its setup message says what they should be: the strongest
-model the account has, Fable 5.1 where the user's plan includes it, otherwise Opus 5.5; high for
-the setup and from the first handoff, with the few reviews the plan names at xhigh, and xhigh for a
-setup that must write §0 or reconcile the plan with the tree. Max is never dictated: Fable at max
-is the heaviest setting there is, and the effort is decided from the plan at run time rather than
-fixed in the skill. Its `allowed-tools` pre-approve, for the invoking turn, read-only git, edits
-under `~/.claude/plans`, and the script below; the later turns run under the thread's
-permission mode, which is why plan mode is the fit: it holds the thread to the same limits. The
-skill never asks for anything that changes the repository. The script needs Node 18 or later and
-nothing else.
+A link or copy at `~/.claude/skills/executioner` works in every project but is not recommended: it
+runs in place of any project's own `executioner`, which would then need a name of its own; the
+repository's [Install](../../README.md#install) says when it suits.
+
+The skill runs by hand only, on the model and effort the user sets, and its setup message says what
+they should be: the strongest model the account has, Fable 5.1 where the user's plan includes it,
+otherwise Opus 5.5; high for the setup and from the first handoff, with the few reviews the plan
+names at xhigh, and xhigh for a setup that must write §0 or reconcile the plan with the tree. Max is
+never dictated: Fable at max is the heaviest setting there is, and the effort is decided from the
+plan at run time rather than fixed in the skill. Its `allowed-tools` pre-approve, for the invoking
+turn, read-only git, edits under `~/.claude/plans`, and the script below; the later turns run under
+the thread's permission mode, which is why plan mode is the fit: it holds the thread to the same
+limits. The skill never asks for anything that changes the repository. The script needs Node 18 or
+later and nothing else.
 
 Without a path, the skill takes the newest execution plan under `~/.claude/plans`, and asks when
 that is unclear.
@@ -82,9 +96,9 @@ with every character that is not a letter or a digit replaced by `-`.
 
 ## Keeping a copy current
 
-This repository is the baseline. The frontmatter's `metadata.baseline` is the date of the
-baseline a copy was adapted from. A copy has nothing of its own but the rules a project adds, so
-compare the files whole:
+This repository is the baseline; a project that links the skill runs the baseline itself and needs
+none of this. The frontmatter's `metadata.baseline` is the date of the baseline a copy was adapted
+from. A copy has nothing of its own but the rules a project adds, so compare the files whole:
 
 ```bash
 COPY=/path/to/project/.claude/skills/executioner

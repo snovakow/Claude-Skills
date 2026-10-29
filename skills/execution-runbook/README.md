@@ -13,21 +13,35 @@ carries their shape and the method the threads that wrote them used.
 
 ## Install
 
-Copy the folder into the project and run `/execution-runbook` in Claude Code, best as the first
-message of a fresh thread in plan mode, with the brief after the command:
+Link the folder into the project, or copy it there where the project adds rules of its own, and run
+`/execution-runbook` in Claude Code, best as the first message of a fresh thread in plan mode, with
+the brief after the command. A link, made from this repository's root, runs the skill as this
+repository has it, with no copy to keep current, and is kept out of the project's history:
 
 ```bash
+mkdir -p /path/to/project/.claude/skills
+ln -sn "$PWD/skills/execution-runbook" /path/to/project/.claude/skills/execution-runbook
+echo .claude/skills/execution-runbook >> /path/to/project/.git/info/exclude
+```
+
+A copy, for a project's own version:
+
+```bash
+mkdir -p /path/to/project/.claude/skills
 cp -R skills/execution-runbook /path/to/project/.claude/skills/execution-runbook
 ```
 
-A copy at `~/.claude/skills/execution-runbook` works in every project. The skill runs by hand only,
-on the model and effort the thread is set to. It sizes the job from its survey and says what the
-brief calls for: the strongest model the account has, Fable 5.1 where the user's plan includes it,
-otherwise Opus 5.5, at high for a brief within one area and xhigh for one that spans areas,
-branches or a pipeline change, never max; below that setting it stops and waits for the change.
-Its `allowed-tools` pre-approve, for the invoking turn, read-only git, the Explore and Plan
-subagents, the question tool, edits under `~/.claude/plans`, and opening the finished file in the
-editor; nothing that changes the repository is approved, and the skill never asks for it.
+A link or copy at `~/.claude/skills/execution-runbook` works in every project but is not
+recommended: it runs in place of any project's own `execution-runbook`, which would then need a name
+of its own; the repository's [Install](../../README.md#install) says when it suits.
+
+The skill runs by hand only, on the model and effort the thread is set to. It sizes the job from its
+survey and says what the brief calls for: the strongest model the account has, Fable 5.1 where the
+user's plan includes it, otherwise Opus 5.5, at high for a brief within one area and xhigh for one
+that spans areas, branches or a pipeline change, never max; below that setting it stops and waits
+for the change. Its `allowed-tools` pre-approve, for the invoking turn, read-only git, the Explore
+and Plan subagents, the question tool, edits under `~/.claude/plans`, and opening the finished file
+in the editor; nothing that changes the repository is approved, and the skill never asks for it.
 
 The arguments are an optional version, such as `7.1.0`, and the brief. The version is what the
 plan's first release carries where the project keeps version commits; without one, the skill asks
@@ -90,9 +104,10 @@ skill the user runs afterwards, `/commit <version>` for a line's first release a
 
 ## Keeping a copy current
 
-This repository is the baseline. The frontmatter's `metadata.baseline` is the date of the
-baseline a copy was adapted from. A copy has no settings block of its own: what a project changes
-is nothing, or the few rules it adds for its plans. To compare a copy, diff the files:
+This repository is the baseline; a project that links the skill runs the baseline itself and needs
+none of this. The frontmatter's `metadata.baseline` is the date of the baseline a copy was adapted
+from. A copy has no settings block of its own: what a project changes is nothing, or the few rules
+it adds for its plans. To compare a copy, diff the files:
 
 ```bash
 COPY=/path/to/project/.claude/skills/execution-runbook
