@@ -25,7 +25,7 @@ allowed-tools:
   - Bash(code -r *)
   - Bash(open -a "Visual Studio Code" *)
 metadata:
-  baseline: 2026-10-21
+  baseline: 2026-10-29
 ---
 
 # Write an execution plan
@@ -56,7 +56,7 @@ Every prompt in the plan opens with "Read `<that path>` §1 …", so settle the 
 Before any subagent runs, take the facts that frame everything, each from the tree or git, never from memory:
 
 - the branches the work lands on, their tips and versions, whether the checkout is clean, and what `main` points at
-- the release skill, if one is installed: `.claude/skills/commit/SKILL.md` and any sibling such as `commit-editor`, in the project or under `~/.claude/skills`. Read its settings block: the protected branches, the version shape and whether runs end with a version commit, the checks it runs, the docs it maintains, the names it never mentions, and whether it must be run in a fresh thread. These become rules of §1 and the Commit lines of §3.
+- the release skill, if one is installed: `.claude/skills/commit/SKILL.md` and any sibling such as `commit-editor`, in the project or under `~/.claude/skills`. Where both hold a skill of the same name, the one under `~/.claude/skills` runs and the project's never does: read the one that runs, and say that the project's is shadowed. Read its settings block: the protected branches, the version shape and whether runs end with a version commit, the checks it runs, the docs it maintains, the names it never mentions, and whether it must be run in a fresh thread. These become rules of §1 and the Commit lines of §3.
 - the project's own instructions: `CLAUDE.md`, the docs folder, and the memory notes in the project's memory index that bear on the brief. Rules that bind the work are restated in the plan, each once, so that no thread needs anything but the plan and the repository.
 - the test runner, the current test count where the project records it (a changelog section, a release note; otherwise one run of the suite), and the build command with its cautions
 - the size of what is replaced or extended: line counts of the modules involved, where they are imported, the one thing that uses them today

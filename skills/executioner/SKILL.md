@@ -21,7 +21,7 @@ allowed-tools:
   - Bash(git worktree list *)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs *)
 metadata:
-  baseline: 2026-10-22
+  baseline: 2026-10-29
 ---
 
 # Run an execution plan
@@ -53,7 +53,7 @@ The executioner is judgment, not implementation: it reads reports, matches evide
 
 1. Find the plan, read it whole once, and note its path; every later turn re-reads §0 and the milestone in progress rather than the whole file.
 2. Check §0. A plan `/execution-runbook` wrote carries the contract in full; a plan without §0, or with paragraphs missing, gets them written now, each a bold label, with the plan's own values filled in: the thread that runs this plan is the executioner; the file is the state, with a progress table; where the other thread's state is read; how a review is done; how a handoff is written; what each prompt from the user means; effort, dictated by the flow, naming the milestones whose review runs at xhigh; the plan is corrected by the threads; prompts are fenced; read-only with or without plan mode. The rules below are what each paragraph says. Say in the message what was added.
-3. Confirm the tree against the plan's preamble with read-only git: the branch tips and their versions, the checkout's state, the release skill the Commit lines name present in `.claude/skills`. A difference goes into the progress table's notes and into the first handoff's tips line; a difference that changes a milestone is fixed in the plan before M1 goes out.
+3. Confirm the tree against the plan's preamble with read-only git and file reads: the branch tips and their versions, the checkout's state, the release skill the Commit lines name present in the project's `.claude/skills` or in `~/.claude/skills`; where both hold it, the one in `~/.claude/skills` is the one that runs, and a project copy it shadows is a difference. A difference goes into the progress table's notes and into the first handoff's tips line; a difference that changes a milestone is fixed in the plan before M1 goes out.
 4. Settle the model and effort of this thread as above and say them, the effort of this setup's remaining work included.
 5. Fill the progress table under §0: one row per milestone with its release, its state (`waiting`, `in progress`, `reviewed CLEAR`, `reviewed ACTION NEEDED`, `skipped`), its date, and notes; then the line `Next turn: high (setup)`.
 6. Answer what the user asks about the setup; otherwise sit. The message ends `Next turn: high (setup)`, or `Next turn: xhigh (setup)` where the setup must go on at xhigh.
