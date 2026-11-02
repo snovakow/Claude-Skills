@@ -14,9 +14,13 @@ switches are dictated by the flow rather than remembered, and the thread never b
 ## Install
 
 Link the folder into the project, or copy it there where the project adds rules of its own, and run
-`/executioner <plan path>` as the first message of a fresh thread, in plan mode, from the project's
-directory. A link, made from this repository's root, runs the skill as this repository has it, with
-no copy to keep current, and is kept out of the project's history:
+`/executioner` in Claude Code, in plan mode, from the project's directory: in the thread that wrote
+the execution plan, with nothing after the command, or as the first message of a fresh thread, with
+the plan's path after it. A link runs the skill as this repository has it, with no copy to keep
+current, and is kept out of the project's history.
+
+Run these from the root of this repository, the Claude-Skills clone, not from the project.
+`/path/to/project` is the root of the project that gets the skill:
 
 ```bash
 mkdir -p /path/to/project/.claude/skills
@@ -24,7 +28,7 @@ ln -sn "$PWD/skills/executioner" /path/to/project/.claude/skills/executioner
 echo .claude/skills/executioner >> /path/to/project/.git/info/exclude
 ```
 
-A copy, for a project's own version:
+A copy, for a project's own version, also from the root of the Claude-Skills clone:
 
 ```bash
 mkdir -p /path/to/project/.claude/skills
@@ -41,13 +45,21 @@ otherwise Opus 5.5; high for the setup and from the first handoff, with the few 
 names at xhigh, and xhigh for a setup that must write §0 or reconcile the plan with the tree. Max is
 never dictated: Fable at max is the heaviest setting there is, and the effort is decided from the
 plan at run time rather than fixed in the skill. Its `allowed-tools` pre-approve, for the invoking
-turn, read-only git, edits under `~/.claude/plans`, and the script below; the later turns run under
-the thread's permission mode, which is why plan mode is the fit: it holds the thread to the same
-limits. The skill never asks for anything that changes the repository. The script needs Node 18 or
-later and nothing else.
+turn, read-only git and the script below; the later turns run under the thread's permission mode,
+which is why plan mode is the fit: it holds the thread to the same limits. The plan's folder,
+`~/.claude/plans`, is a protected one that no rule pre-approves a write in: the thread's own plan
+file needs none, and any other plan there, whichever thread wrote it, is judged by auto mode's
+classifier, in plan mode too where auto mode is available, and asked about otherwise. The skill never asks for anything
+that changes the repository. The script needs Node 18 or later and nothing else.
 
-Without a path, the skill takes the newest execution plan under `~/.claude/plans`, and asks when
-that is unclear.
+Without a path, the skill runs the execution plan the thread wrote, whether or not the thread also
+made the source plan that one was written from, so one thread can lay out a plan, turn it into an
+execution plan with `/execution-runbook`, and run it. A source plan with no execution plan written
+from it, held by the thread or given by its path, is not run: the skill says to run
+`/execution-runbook` on it first. A thread that holds neither is asked for the path, with the
+execution plans under `~/.claude/plans` listed newest first. A thread that holds other work besides
+the plan's making, or was continued from a summary, is told to run the executioner fresh with the
+path: the plan file is the state, so the run loses nothing by moving.
 
 ## How a run goes
 
@@ -98,11 +110,13 @@ with every character that is not a letter or a digit replaced by `-`.
 
 This repository is the baseline; a project that links the skill runs the baseline itself and needs
 none of this. The frontmatter's `metadata.baseline` is the date of the baseline a copy was adapted
-from. A copy has nothing of its own but the rules a project adds, so compare the files whole:
+from. A copy has nothing of its own but the rules a project adds, so compare the files whole, from
+the root of the Claude-Skills clone, with `/path/to/project` as the root of the project that holds
+the copy:
 
 ```bash
 COPY=/path/to/project/.claude/skills/executioner
-grep -n 'baseline:' skills/executioner/SKILL.md "$COPY/SKILL.md"
+grep -n '^  baseline:' skills/executioner/SKILL.md "$COPY/SKILL.md"
 diff skills/executioner/SKILL.md "$COPY/SKILL.md"
 diff skills/executioner/scripts/tail.mjs "$COPY/scripts/tail.mjs"
 ```

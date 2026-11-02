@@ -1,6 +1,6 @@
 ---
 name: executioner
-description: Run an execution plan as its manager thread, handing each milestone's prompt to a fresh thread, reviewing every result against the plan's acceptance checks, folding the corrections into the plan, saying how to proceed, and ending every message with the effort the next turn needs. Reads everything, writes only the plan file. Run by hand only, as the first thing in a thread.
+description: Run an execution plan as its manager thread, handing each milestone's prompt to a fresh thread, reviewing every result against the plan's acceptance checks, folding the corrections into the plan, saying how to proceed, and ending every message with the effort the next turn needs. Reads everything, writes only the plan file. Run by hand only, with the plan's path as the first thing in a fresh thread, or with none in the thread that wrote the plan.
 argument-hint: "[path to the execution plan]"
 disable-model-invocation: true
 allowed-tools:
@@ -21,20 +21,21 @@ allowed-tools:
   - Bash(git worktree list *)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs *)
 metadata:
-  baseline: 2026-10-29
+  baseline: 2026-11-02
 ---
 
 # Run an execution plan
 
 Arguments: $ARGUMENTS
 
-The argument is the path of an execution plan, a file `/execution-runbook` writes: §0 the executioner's contract, §1 the rules, §2 the design, §3 the milestones with their prompts, §4 the verification of the finished work. Without an argument, the plan is the newest file under the plans directory (`~/.claude/plans`, or the `plansDirectory` setting) whose first line begins `# Execution plan:`. List the candidates by date when more than one is recent, and ask rather than guess.
+The argument is the path of an execution plan, a file `/execution-runbook` writes: §0 the executioner's contract, §1 the rules, §2 the design, §3 the milestones with their prompts, §4 the verification of the finished work. Without an argument, the plan is the one this thread wrote: the file `/execution-runbook` named in its report earlier in this thread, whether or not the thread also made the source plan that one was written from. A source plan with no execution plan written from it, held by the thread or given by its path, is not run: say to run `/execution-runbook` on it first, and stop. In a thread that holds neither, list the files under the plans directory (`~/.claude/plans`, or the `plansDirectory` setting) whose first line begins `# Execution plan:`, newest first, and ask which rather than guess.
 
 This thread is the plan's executioner for the whole run. It hands each milestone's prompt to a fresh thread, reviews that thread's result against the plan when the user says "Continue", folds what the thread found into the plan, and says how to proceed. It builds nothing itself.
 
 ## Rules that hold throughout
 
-- Run as the first thing in the thread, and keep the thread open for the run. Its context will be summarised over a long run, so the plan file is the state: at the start of every turn, re-read §0, the progress table and the milestone in progress from the file before judging anything, and write every decision into the file rather than keeping it in memory. This file, `${CLAUDE_SKILL_DIR}/SKILL.md`, is re-read the same way when its rules are no longer in context. The thread's own id is `${CLAUDE_SESSION_ID}`, which the harness fills in here, and the tail script leaves that transcript out when told it.
+- Run with the plan's path as the first thing in a fresh thread, or with no argument in the thread that wrote the plan, and keep the thread open for the run. Its context will be summarised over a long run, sooner where the thread holds the planning before it, so the plan file is the state: at the start of every turn, re-read §0, the progress table and the milestone in progress from the file before judging anything, and write every decision into the file rather than keeping it in memory. This file, `${CLAUDE_SKILL_DIR}/SKILL.md`, is re-read the same way when its rules are no longer in context. The thread's own id is `${CLAUDE_SESSION_ID}`, which the harness fills in here, and the tail script leaves that transcript out when told it.
+- The thread is kept only where it is fresh, or holds nothing but the plan's making, the source plan and the runbook's run, at its first context. Where it holds other work, or opens with the harness's summary of an earlier context, the setup does nothing else: say so, give `/executioner <path>` in a fenced block for a fresh thread, and stop. The run loses nothing by moving, since the file is the state.
 - Read-only, with or without plan mode. The executioner changes nothing but the plan file. Its commands are read-only: git log, show, diff, status and branch listing, grep, file reads, and the tail script under `${CLAUDE_SKILL_DIR}/scripts/`. It never checks out, commits, rebases, merges, installs, builds, runs the test suite, writes the repository, a memory note or a scratchpad file, or launches a browser or an agent; what needs any of those is the milestone thread's or the user's, and the executioner writes the prompt for it. Plan mode enforces the same limits and is left on; the executioner never calls the plan-mode exit, since the milestone threads read the file directly and nothing depends on the plan being approved in the harness's sense.
 - Every prompt handed to another thread is a fenced code block, so it is copied with its button rather than selected by hand.
 - Every message ends with one line, `Next turn: <effort>`, the setting the next turn needs, computed from the flow as §0 says. The progress table in the plan carries the same line, so it survives a summarised context.
@@ -51,7 +52,7 @@ The executioner is judgment, not implementation: it reads reports, matches evide
 
 ## 1. Setup, the first turn
 
-1. Find the plan, read it whole once, and note its path; every later turn re-reads §0 and the milestone in progress rather than the whole file.
+1. Find the plan, read it whole once from the file, even where this thread wrote it, and note its path; every later turn re-reads §0 and the milestone in progress rather than the whole file.
 2. Check §0. A plan `/execution-runbook` wrote carries the contract in full; a plan without §0, or with paragraphs missing, gets them written now, each a bold label, with the plan's own values filled in: the thread that runs this plan is the executioner; the file is the state, with a progress table; where the other thread's state is read; how a review is done; how a handoff is written; what each prompt from the user means; effort, dictated by the flow, naming the milestones whose review runs at xhigh; the plan is corrected by the threads; prompts are fenced; read-only with or without plan mode. The rules below are what each paragraph says. Say in the message what was added.
 3. Confirm the tree against the plan's preamble with read-only git and file reads: the branch tips and their versions, the checkout's state, the release skill the Commit lines name present in the project's `.claude/skills` or in `~/.claude/skills`; where both hold it, the one in `~/.claude/skills` is the one that runs, and a project copy it shadows is a difference. A difference goes into the progress table's notes and into the first handoff's tips line; a difference that changes a milestone is fixed in the plan before M1 goes out.
 4. Settle the model and effort of this thread as above and say them, the effort of this setup's remaining work included.

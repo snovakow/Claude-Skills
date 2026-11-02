@@ -1,7 +1,7 @@
 ---
 name: execution-runbook
-description: Turn a brief into an execution plan for a project, milestone by milestone, each with its seams, acceptance checks, model and effort, a paste-ready prompt and its commit, under the rules every thread works by and the executioner's own section. Writes one markdown file, names it, and shows it. Changes nothing in the repository. Run by hand only.
-argument-hint: "[x.y.z] <the brief: what is to be built>"
+description: Turn a plan laid out beforehand, given by its path or held by the thread that made it, into an execution plan for a project, milestone by milestone, each with its seams, acceptance checks, model and effort, a paste-ready prompt and its commit, under the rules every thread works by and the executioner's own section. Writes one markdown file, names it, and shows it. Changes nothing in the repository. Run by hand only.
+argument-hint: "[x.y.z] [path to the plan]"
 disable-model-invocation: true
 allowed-tools:
   - Read
@@ -11,6 +11,7 @@ allowed-tools:
   - Agent(Plan)
   - AskUserQuestion
   - Edit(~/.claude/plans/**)
+  - Bash(mkdir -p ~/.claude/plans/*)
   - Bash(git log *)
   - Bash(git show *)
   - Bash(git diff *)
@@ -25,20 +26,23 @@ allowed-tools:
   - Bash(code -r *)
   - Bash(open -a "Visual Studio Code" *)
 metadata:
-  baseline: 2026-10-29
+  baseline: 2026-11-02
 ---
 
 # Write an execution plan
 
 Arguments: $ARGUMENTS
 
-The arguments are an optional version, written like `7.1.0`, and the brief: what is to be built, typed or pasted, as long as it needs to be. The version is the number the plan's first release carries, where the project keeps version commits. With no brief, ask for one and stop.
+The arguments are an optional version, written like `7.1.0`, and an optional path to the source plan: the plan laid out beforehand that this run turns into an execution plan. The version is the number the execution plan's first release carries, where the project keeps version commits. Without a path, the source plan is this thread's own: the plan the thread made, in the plan file the harness named for it or in its messages, or a plan pasted after the command. A thread that holds none, the command being its first message with nothing after it, is asked for the path, and the skill stops there.
 
-The plan is a markdown file that other threads execute one milestone at a time, each in a fresh thread with the milestone's prompt as its first message, while a manager thread, the executioner, hands the prompts over and reviews the results against the plan. This skill writes the plan; `/executioner` runs it. Everything a milestone thread needs is in the file: the rules, the design, its own section and its prompt. Nothing travels by memory.
+Read the source plan whole before the survey. Its decisions are the user's and stand, going into §1 as dated decisions without being asked again; its parts and their order are where §3 starts; its claims about the code are readings to check against the tree, never facts.
+
+The execution plan, "the plan" from here on, is a markdown file that other threads execute one milestone at a time, each in a fresh thread with the milestone's prompt as its first message, while a manager thread, the executioner, hands the prompts over and reviews the results against the plan. This skill writes the plan; `/executioner` runs it. Everything a milestone thread needs is in the file: the rules, the design, its own section and its prompt. Nothing travels by memory.
 
 ## Rules that hold throughout
 
-- Run it in a fresh thread, in plan mode, with the brief as its first message. A thread that already holds the discussion that led to the brief may run it too; what was decided there goes into the plan as dated decisions.
+- Run it in the thread that made the source plan, with no path, or as the first message of a fresh thread, with the source plan's path; in plan mode where the plan can be the thread's own plan file, as *Where the plan goes* says. Where the thread made the source plan, what its discussion decided goes into the plan as dated decisions beside the source plan's own.
+- The thread is kept only where everything it holds is the source plan's making, at its first context. Where it holds other work, or opens with the harness's summary of an earlier context, say so before the survey and stop, giving the command for a fresh thread in a fenced block: `/execution-runbook <the source plan's path>`, the version first where one was given, or the command with the plan pasted after it where the plan is not a file; and list any decision the thread made that the source plan does not carry, for the user to write into it first.
 - Change nothing in the repository: no checkout, no commit, no install, no build, no edit to a tracked file. Read-only git, file reads, searches and subagents that search are the tools. The one thing written is the plan file. The test suite may be run once for its count where the project does not record it, and only when running it writes nothing into the tree.
 - Treat every fact as a reading of the tree at a named commit, dated. The plan says so, and the threads verify what they rely on.
 - The plan names the person by the first name `git config user.name` gives, or "the user": a prompt is read by a thread, so "you" in one means the thread.
@@ -46,8 +50,8 @@ The plan is a markdown file that other threads execute one milestone at a time, 
 
 ## Where the plan goes
 
-- In plan mode, the plan file is the one the harness names for the thread. Write there.
-- Otherwise, write to `<plans directory>/<repository folder name>-<topic>/execution-plan.md`, the topic a few kebab-case words for what is built.
+- In plan mode, the plan file is the one the harness names for the thread, and the only file plan mode writes. Write there. Where that file holds the source plan, stop before the survey and say so, with the two ways on: plan mode off in this thread, after which the plan goes beside the source plan at the path below; or `/execution-runbook <the source plan's path>` as the first message of a fresh thread in plan mode, where the plan is that thread's own file.
+- Otherwise, write to `<plans directory>/<repository folder name>-<topic>/execution-plan.md`, the topic a few kebab-case words for what is built, the folder made with `mkdir -p`. That folder is under `~/.claude`, a protected one: the default permission mode asks before the write, and auto mode's classifier judges it. The source plan is never overwritten.
 
 Every prompt in the plan opens with "Read `<that path>` §1 …", so settle the path before writing a prompt.
 
@@ -57,7 +61,7 @@ Before any subagent runs, take the facts that frame everything, each from the tr
 
 - the branches the work lands on, their tips and versions, whether the checkout is clean, and what `main` points at
 - the release skill, if one is installed: `.claude/skills/commit/SKILL.md` and any sibling such as `commit-editor`, in the project or under `~/.claude/skills`. Where both hold a skill of the same name, the one under `~/.claude/skills` runs and the project's never does: read the one that runs, and say that the project's is shadowed. Read its settings block: the protected branches, the version shape and whether runs end with a version commit, the checks it runs, the docs it maintains, the names it never mentions, and whether it must be run in a fresh thread. These become rules of §1 and the Commit lines of §3.
-- the project's own instructions: `CLAUDE.md`, the docs folder, and the memory notes in the project's memory index that bear on the brief. Rules that bind the work are restated in the plan, each once, so that no thread needs anything but the plan and the repository.
+- the project's own instructions: `CLAUDE.md`, the docs folder, and the memory notes in the project's memory index that bear on the source plan. Rules that bind the work are restated in the plan, each once, so that no thread needs anything but the plan and the repository.
 - the test runner, the current test count where the project records it (a changelog section, a release note; otherwise one run of the suite), and the build command with its cautions
 - the size of what is replaced or extended: line counts of the modules involved, where they are imported, the one thing that uses them today
 - the precedent: the commit that last added something of the same shape (a new kind, a new pass, a new window), by hash and file count, since its touched files are the seam list a milestone copies
@@ -66,7 +70,7 @@ Keep each fact with its source: the commit, the file, the function.
 
 ## 2. Size the job
 
-This thread runs at ${CLAUDE_EFFORT}. The plan's judgments are what the whole execution runs on, so the thread runs on the strongest model the account has, Fable 5.1 where the user's plan includes it, otherwise Opus 5.5, and at the effort the brief's size calls for, decided now from the survey rather than fixed in advance:
+This thread runs at ${CLAUDE_EFFORT}. The plan's judgments are what the whole execution runs on, so the thread runs on the strongest model the account has, Fable 5.1 where the user's plan includes it, otherwise Opus 5.5, and at the effort the source plan's size calls for, decided now from the survey rather than fixed in advance:
 
 - **high**: one area of the code on one branch, a few milestones, no pipeline change.
 - **xhigh**: several areas or two branches, a pipeline change, a removal across many files, or about eight milestones or more.
@@ -76,17 +80,17 @@ Say the size and the setting it calls for in the first message, beside the setti
 
 ## 3. Explore
 
-Launch one Explore subagent per area the brief touches, in parallel, breadth "very thorough", each briefed with the repository's layout and asked for the seams by name: the files and functions a change goes through, the precedent's touched files, the tests beside them, the conventions a module follows, and what the brief's words map to in the code. Gather the cheap facts yourself while they run. Where a design choice is risky, have a Plan subagent check it against the code before it is written in. Trust nothing from a brief or a note over the tree: a claim that matters is read in the source.
+Launch one Explore subagent per area the source plan touches, in parallel, breadth "very thorough", each briefed with the repository's layout and asked for the seams by name: the files and functions a change goes through, the precedent's touched files, the tests beside them, the conventions a module follows, and what the source plan's words map to in the code. Gather the cheap facts yourself while they run. Where a design choice is risky, have a Plan subagent check it against the code before it is written in. Trust nothing from the source plan or a note over the tree: a claim that matters is read in the source.
 
 ## 4. Decide
 
-Collect every choice the brief leaves open that would change the plan: a mode kept or dropped, a port versus an in-place change, a layout model, which first version number a release line starts at when the arguments name none and the project keeps version commits. Ask them all in one AskUserQuestion, the recommended answer first with its trade-off, before writing. The answers go into §1 as dated decisions every milestone follows.
+Collect every choice the source plan leaves open that would change the plan: a mode kept or dropped, a port versus an in-place change, a layout model, which first version number a release line starts at when the arguments name none and the project keeps version commits. Add each decision of the source plan that the tree contradicts, with what the tree shows; the rest of its decisions are not asked again. Ask them all in one AskUserQuestion, the recommended answer first with its trade-off, before writing. The answers go into §1 as dated decisions every milestone follows.
 
 ## 5. The shape of the plan
 
-Write it in this order. Headings are the sections; bold run-in labels are the paragraphs. The two plans this shape was taken from ran fourteen and fifteen milestones; a smaller brief makes fewer.
+Write it in this order. Headings are the sections; bold run-in labels are the paragraphs. The two plans this shape was taken from ran fourteen and fifteen milestones; a smaller source plan makes fewer.
 
-**Title and preamble.** `# Execution plan: <the thing>`, then one paragraph: what it is in a sentence, the date and the tip it was read from, the decisions folded in, and "Milestones M1–M<n> run one per fresh thread in file order".
+**Title and preamble.** `# Execution plan: <the thing>`, then one paragraph: what it is in a sentence, the date and the tip it was read from, the source plan by its path where it is a file, the decisions folded in, and "Milestones M1–M<n> run one per fresh thread in file order".
 
 **§0. The executioner thread.** The contract of the thread that runs the plan, written so that the thread can re-read it from the file after its own context has been summarised. Its paragraphs, each a bold label:
 
@@ -104,8 +108,8 @@ Write it in this order. Headings are the sections; bold run-in labels are the pa
 **§1. Context.**
 
 - *What is being built.* The thing in a paragraph: what goes, what comes, what it reaches, in the project's own terms.
-- *Decisions*, dated and attributed, which every milestone follows: the answers from step 4 and anything the brief itself settled.
-- *Inspiration, not source*, where the brief names references: what they are the reference for and what is never copied from them, and the idiom everything is written in.
+- *Decisions*, dated and attributed, which every milestone follows: the source plan's, those of the discussion that made it where this thread holds it, and the answers from step 4.
+- *Inspiration, not source*, where the source plan names references: what they are the reference for and what is never copied from them, and the idiom everything is written in.
 - *Rules that bind every milestone*, from the project's own instructions, each restated once: where work lands (branches, the worktree rule when the checkout is busy, how one branch rebases onto another); the release rule (a milestone is one or a few ordinary content commits on its branch; the release skill, run by the user, writes the version and the changelog section; the version scheme; what a commit message must carry for the changelog); what must never appear in the repository; comment and doc conventions; the compatibility rule (what an older document or input is owed, and what a fix reaching every launch must say); what must never be edited (another repository, existing test data); the test command and the count at the tip, the build command and its cautions, module boundaries; the domain's invariants (the rules a wrong change breaks silently); and this one, verbatim in spirit: **the plan binds on decisions and acceptance, not on its code facts**: every seam, name and behaviour claim is a reading of the tree at the named tip, made before the milestones ahead moved it; a thread verifies each claim it relies on against the tree it works in, follows the tree where the two differ, and reports every difference; an acceptance check is a measurement the thread makes, never the plan's expectation restated, and a check the thread cannot make is reported as not made.
 - *How every milestone thread ends.* The last line of the report is one of two verdicts, on its own line: `CLEAR: commit made on <branch>; run /commit (or the project's release skill, with the version written in where the milestone is a line's first release), then start M<n+1>.`, used only when every acceptance check passed, the checks are green and the live evidence shows no unexplained difference; or `ACTION NEEDED: <what the user must do or decide, in one or two sentences>.`, used when a check failed, a difference is unexplained, a device check is required before the commit is safe, or a decision in the milestone is the user's. The thread does not commit on an ACTION NEEDED unless the commit is complete and only the outside check remains, and says which. Anything short of a passed check is ACTION NEEDED, never CLEAR with a caveat. The report ends in a fixed order: a section headed PLAN CORRECTIONS (each place the plan's facts differed from the tree: the file, the function or constant, what the plan said, what is true; or the word "none"), then, for the pipeline milestones alone, a section headed READ THIS EVIDENCE naming the pairs and numbers the user reads personally, then the verdict line.
 - *The live harness.* How a thread proves a change live in this project: how the thing is served and driven, from which tree, on which ports and never through the user's own; what counts as evidence (a screenshot's pixel or mean colour, a value sampled per frame, a ratio against the same harness on the same frames); how a before/after pair is made (a worktree at the old tip beside the new one); what cannot be driven from the harness and is the user's to check on a device.
@@ -147,13 +151,13 @@ Write the file in sections, each with a marker for the next (`<!-- §3 follows -
 
 ## 8. Stress-test
 
-A reviewer that did not write the plan catches more, so hand the finished plan to a Plan subagent at effort xhigh with a fresh context, briefed to review it against the tree at the named tip: that every seam and function it names exists and works as claimed; that each milestone's change works with the pipeline as the earlier milestones leave it and keeps what the existing projects show today; that the acceptance checks would really catch failure; that the model, effort and thread advice is sound, with a pipeline milestone at xhigh unless it can say why high is enough; and the specific checks the brief needs (a prior-art branch's distance from the tip, a dependency's source behind a claim the plan relies on, the licence of every asset the plan would take, a rule of the project's a milestone touches). It returns corrections with their evidence and the risks still open; fold the corrections into the plan, keep every prompt paste-ready, and write the open risks as §6.
+A reviewer that did not write the plan catches more, so hand the finished plan to a Plan subagent at effort xhigh with a fresh context, briefed to review it against the tree at the named tip: that every seam and function it names exists and works as claimed; that each milestone's change works with the pipeline as the earlier milestones leave it and keeps what the existing projects show today; that the acceptance checks would really catch failure; that the model, effort and thread advice is sound, with a pipeline milestone at xhigh unless it can say why high is enough; and the specific checks the source plan needs (a prior-art branch's distance from the tip, a dependency's source behind a claim the plan relies on, the licence of every asset the plan would take, a rule of the project's a milestone touches). It returns corrections with their evidence and the risks still open; fold the corrections into the plan, keep every prompt paste-ready, and write the open risks as §6.
 
 ## 9. Report
 
 Say where the plan is, by its absolute path, and show it:
 
-- in plan mode, call ExitPlanMode, which presents the plan: the editor opens it as a markdown document, and `/plan open` reopens it while the thread stays in plan mode. Say that approval only ends plan mode, since nothing is implemented in this thread; rejection keeps the thread in plan mode for changes. The file stays either way.
+- in plan mode, call ExitPlanMode, which presents the plan: the editor opens it as a markdown document, and `/plan open` reopens it while the thread stays in plan mode. Say that approval only ends plan mode, since nothing is implemented in this thread; rejection keeps the thread in plan mode, for changes or for the executioner to run here. The file stays either way.
 - otherwise open it in the editor: `code -r <path>`, or on macOS `open -a "Visual Studio Code" <path>` where the `code` command is not installed; the editor's markdown preview shows it rendered.
 
-Then say the next step: `/executioner <path>` as the first message of a fresh thread, on the strongest model available at high, the executioner saying in its setup message where its work needs more, and that each milestone is run from the handoffs that thread writes.
+Then say the next step: `/executioner` with nothing after it, in this thread, or `/executioner <path>` as the first message of a fresh thread; either way in plan mode, on the strongest model available at high, the executioner saying in its setup message where its work needs more, and that each milestone is run from the handoffs that thread writes.

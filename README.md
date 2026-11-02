@@ -1,19 +1,19 @@
 # Claude-Skills
-Claude skills to accelerate and enhance project workflow by compiling briefs into precise execution plans, running those plans milestone by milestone from a manager thread, and autonomously analyzing, staging, and committing workspace changes.
+Claude skills to accelerate and enhance project workflow by compiling plans into precise execution plans, running those plans milestone by milestone from a manager thread, and autonomously analyzing, staging, and committing workspace changes.
 
 ## Skills
 
-- [execution-runbook](skills/execution-runbook/) — `/execution-runbook` turns a brief into an
-  execution plan: the rules every thread works by, the design in one place, the milestones in
-  execution order, each with its seams, acceptance checks, model and effort, a paste-ready prompt
-  and its commit, the verification of the finished work, and the executioner's own contract. It
-  writes one file outside the repository, names it and shows it, and changes nothing else. See its
-  [README](skills/execution-runbook/README.md).
-- [executioner](skills/executioner/) — `/executioner` makes a fresh thread the manager of that
-  plan: it hands each milestone's prompt to a fresh thread, reviews each result against the plan's
-  acceptance checks, folds the corrections into the plan, says how to proceed, and ends every
-  message with the effort the next turn needs. It reads everything and writes only the plan. See
-  its [README](skills/executioner/README.md).
+- [execution-runbook](skills/execution-runbook/) — `/execution-runbook` turns a plan, given by its
+  path or held by the thread that made it, into an execution plan: the rules every thread works
+  by, the design in one place, the milestones in execution order, each with its seams, acceptance
+  checks, model and effort, a paste-ready prompt and its commit, the verification of the finished
+  work, and the executioner's own contract. It writes one file outside the repository, names it
+  and shows it, and changes nothing else. See its [README](skills/execution-runbook/README.md).
+- [executioner](skills/executioner/) — `/executioner` makes the thread that wrote that plan, or a
+  fresh one given its path, the plan's manager: it hands each milestone's prompt to a fresh
+  thread, reviews each result against the plan's acceptance checks, folds the corrections into the
+  plan, says how to proceed, and ends every message with the effort the next turn needs. It reads
+  everything and writes only the plan. See its [README](skills/executioner/README.md).
 - [commit](skills/commit/) — `/commit` reviews everything since the last reviewed point, fixes
   what can still be fixed, commits the working tree as itemised commits with real messages, keeps
   the README and docs true, and ends with a version commit, with a changelog section, where the
@@ -22,9 +22,10 @@ Claude skills to accelerate and enhance project workflow by compiling briefs int
 
 ## The workflow
 
-The three skills are one loop. A brief goes to `/execution-runbook` in a fresh thread, which
-explores the code, asks the decisions the brief leaves open, writes the plan and stress-tests it.
-`/executioner` then opens the plan in another fresh thread and hands over the first milestone's
+The three skills are one loop. A plan laid out in a thread goes to `/execution-runbook`, run in
+that thread or in a fresh one given the plan's path, which explores the code, asks what the plan
+leaves open, writes the execution plan and stress-tests it. `/executioner` then runs the execution
+plan, in the same thread or in a fresh one given its path, and hands over the first milestone's
 prompt; each milestone runs in its own fresh thread on the model and effort the plan names, makes
 ordinary content commits, and ends with a verdict. On a `CLEAR` the user runs `/commit` for the
 review, the version and the changelog section, then says "Continue" to the executioner, which
@@ -59,12 +60,15 @@ in its `SKILL.md` renamed together, since either one invokes a skill.
 
 When `~/.claude/skills/` holds nothing of a skill's name, each project runs the one in its own
 `.claude/skills/`: one project can link a skill while another keeps its own version under the
-same name. The commands run from this repository's root.
+same name.
 
 **A link** runs the skill as this repository has it. The project reads what this clone holds, so
 updating the clone updates every project linked to it, and there is no copy to keep current.
 `$PWD` gives the link the absolute path it needs, and the exclude line keeps it out of the
-project's history, since it points into this machine's file system:
+project's history, since it points into this machine's file system.
+
+Run these from the root of this repository, the Claude-Skills clone, not from the project.
+`/path/to/project` is the root of the project that gets the skill:
 
 ```bash
 mkdir -p /path/to/project/.claude/skills
@@ -79,7 +83,9 @@ repository.
 **A copy** is for a project that needs its own version, such as `/commit` with the project's
 settings, or for a skill that is committed with the project, so that every clone of the project
 has it. A copy is checked against this repository as its skill's README describes under *Keeping
-a copy current*:
+a copy current*.
+
+Run these from the root of the Claude-Skills clone too:
 
 ```bash
 mkdir -p /path/to/project/.claude/skills
