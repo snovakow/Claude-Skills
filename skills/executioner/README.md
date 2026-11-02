@@ -49,8 +49,9 @@ turn, read-only git and the script below; the later turns run under the thread's
 which is why plan mode is the fit: it holds the thread to the same limits. The plan's folder,
 `~/.claude/plans`, is a protected one that no rule pre-approves a write in: the thread's own plan
 file needs none, and any other plan there, whichever thread wrote it, is judged by auto mode's
-classifier, in plan mode too where auto mode is available, and asked about otherwise. The skill never asks for anything
-that changes the repository. The script needs Node 18 or later and nothing else.
+classifier, in plan mode too where auto mode is available, and asked about otherwise. The skill
+never asks for anything that changes the repository. The script needs Node 18 or later and
+nothing else.
 
 Without a path, the skill runs the execution plan the thread wrote, whether or not the thread also
 made the source plan that one was written from, so one thread can lay out a plan, turn it into an
