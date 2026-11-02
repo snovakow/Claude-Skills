@@ -13,16 +13,19 @@ settings blocks: one at the top of `SKILL.md`, and its twin at the top of the sc
 ## Install
 
 Copy the folder into the project and run `/commit` in Claude Code. A copy is the usual install,
-since a project adapts the skill by editing its settings:
+since a project adapts the skill by editing its settings.
+
+Run these from the root of this repository, the Claude-Skills clone, not from the project.
+`/path/to/project` is the root of the project that gets the skill:
 
 ```bash
 mkdir -p /path/to/project/.claude/skills
 cp -R skills/commit /path/to/project/.claude/skills/commit
 ```
 
-A project that runs the default settings can link the folder instead, from this repository's root,
-and then runs this repository's current version with no copy to keep current. The link is kept out
-of the project's history:
+A project that runs the default settings can link the folder instead, and then runs this
+repository's current version with no copy to keep current. The link is kept out of the project's
+history. Run these from the root of the Claude-Skills clone too:
 
 ```bash
 mkdir -p /path/to/project/.claude/skills
@@ -102,6 +105,7 @@ the scan reads.
 | Prose the skill keeps true | Maintained docs | `DOCS` | `README.md`, `docs/` |
 | Names that must not appear in public | Never mention | `NEVER_MENTION` | none |
 | Files that should not be tracked | (none) | `JUNK`, `LARGE_FILE` | common build and local files, 1 MB |
+| Lengths the survey flags, and how much it shows and scans | (none) | `SUBJECT_MAX`, `STYLE_SAMPLE`, `LONG_RANGE`, `LIST_MAX`, `DIFFS_MAX` | 72 characters, 8 subjects, 40 commits, 40 lines, 300 commits |
 
 `auto` versioning means: a run ends with a version commit when the history already holds a
 well-formed one, or when the arguments name a version. A new repository therefore gets plain
@@ -162,13 +166,14 @@ What drifts over time is mostly in the frontmatter and the generic body: the `mo
 skill-directory variable, and the rules and steps themselves. A project's own additions live in
 the Project settings block, in the scan's settings block, and in whatever steps it added.
 
-To check a copy against this baseline, run these from this repository. The diffs leave the
+To check a copy against this baseline, run these from the root of the Claude-Skills clone, with
+`/path/to/project` as the root of the project that holds the copy. The diffs leave the
 settings blocks out, since their values are the copy's own, so the last two lines compare only
 the names of the settings: a setting the baseline adds shows up there.
 
 ```bash
 COPY=/path/to/project/.claude/skills/commit
-grep -n 'baseline:' skills/commit/SKILL.md "$COPY/SKILL.md"
+grep -n '^  baseline:' skills/commit/SKILL.md "$COPY/SKILL.md"
 diff <(sed -n '2,/^---$/p' skills/commit/SKILL.md) <(sed -n '2,/^---$/p' "$COPY/SKILL.md")
 diff <(sed -n '/^## Rules that hold throughout/,$p' skills/commit/SKILL.md) <(sed -n '/^## Rules that hold throughout/,$p' "$COPY/SKILL.md")
 diff <(sed -n '/^\/\/ --- Patterns/,$p' skills/commit/scripts/scan.mjs) <(sed -n '/^\/\/ --- Patterns/,$p' "$COPY/scripts/scan.mjs")
