@@ -56,7 +56,9 @@ default permission mode and judged by auto mode's classifier.
 
 The arguments are an optional version, such as `7.1.0`, and an optional path to the source plan.
 The version is what the execution plan's first release carries where the project keeps version
-commits; without one, the skill asks which number the line starts at. Without a path, the source
+commits, needed only where that number is not the release skill's own bump. For each line the
+version leaves open, the skill asks whether the line takes that bump or a jump, the bump
+recommended, or, for a line with no version commit yet, its first number. Without a path, the source
 plan is the thread's own: the one it made, in plan mode's plan file or in its messages, or one
 pasted after the command. A thread that holds none is asked for the path. The source plan's
 decisions stand and are not asked again, and its claims about the code are checked against the
@@ -110,8 +112,9 @@ removal it frees; an editor half after the player half it needs is released; dem
 last; stretch and optional work at the end. Each names its model and effort with the reason, from
 Sonnet at medium for a pure rule to Fable or Opus at xhigh for a change that sits ahead of every
 frame or every input. Each Commit line names the branch, the content commits, and the release
-skill the user runs afterwards, `/commit <version>` for a line's first release and a plain
-`/commit` after, in the thread that skill's rules ask for.
+skill the user runs afterwards, in the thread that skill's rules ask for: a plain `/commit`
+wherever the skill's own bump gives the right number, and `/commit <version>` only where it does
+not, a jump or a line's first version.
 
 ## With the other skills
 
@@ -122,7 +125,8 @@ skill the user runs afterwards, `/commit <version>` for a line's first release a
   one is a change to the other.
 - `/commit` closes each milestone: a milestone thread makes ordinary content commits, and the user
   runs the release skill afterwards for the review, the version and the changelog section. The
-  plan's Commit lines say so, with the version written in only for a line's first release.
+  plan's Commit lines say so, with the version written in only where the release skill's own
+  bump would not give it.
 
 ## Keeping a copy current
 
