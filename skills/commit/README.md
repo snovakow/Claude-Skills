@@ -81,11 +81,12 @@ costs nothing and a commit made by hand is still reviewed at the next release.
 
 ## With the other skills
 
-A milestone of an execution plan (`/execution-runbook` writes one, `/executioner` runs it) is one
-or a few ordinary content commits made by the milestone's thread; this skill is the release the
-plan's Commit lines name afterwards. It runs in a fresh thread, as its rules say, with a version
-passed only where its own bump would not give the number, a jump or a line's first version, and
-the next milestone's review reads the changelog section it wrote for what the review corrected.
+A milestone of an execution plan (`/execution-runbook` writes one, `/executioner` runs it, and
+`/executioner-guide` changes it while it runs) is one or a few ordinary content commits made by
+the milestone's thread; this skill is the release the plan's Commit lines name afterwards. It runs
+in a fresh thread, as its rules say, with a version passed only where its own bump would not give
+the number, a jump or a line's first version, and the next milestone's review reads the changelog
+section it wrote for what the review corrected.
 
 ## Settings
 
@@ -117,10 +118,11 @@ run's commits are pushed the next run asks about them again. That is the trade: 
 unreviewed unless it is pushed without a run or kept at that question, and a forgotten push
 costs a question.
 
-What has been exercised, as of 2026-10-20: every path of the scan, against scratch repositories
-and against a real history with version commits, and runs of the skill with version commits
-off, in this repository. No run has yet produced a version commit. The first project to turn
-versioning on exercises that path, and this note should change when it does.
+What has been exercised, as of 2026-11-06: every path of the scan, against scratch repositories
+and against a real history with version commits; runs of the skill with version commits off, in
+this repository; and runs with version commits on, in a project copy that has released a line of
+patch versions, one per milestone of an execution plan, with no changelog yet. The changelog
+section is the one path no run has produced, and this note should change when one does.
 
 ## Growing it into a project's own
 
