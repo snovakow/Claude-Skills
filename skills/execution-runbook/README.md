@@ -6,7 +6,7 @@ file that names what is built, the decisions and rules every thread works by, th
 in one place, the milestones in execution order, each with its seams, acceptance checks, model and
 effort, a paste-ready prompt and its commit, the verification of the finished work, and what was
 left out. It names the file, shows it, and changes nothing in the repository. `/executioner` runs
-the plan it writes.
+the plan it writes, and `/executioner-guide` answers for it and changes it while it runs.
 
 It is the generic form of two plans the same workflow produced, each of fourteen or fifteen
 milestones run one per fresh thread with a manager thread reviewing every result. This skill
@@ -70,10 +70,10 @@ the execution plan goes beside the source plan at
 ## What a run does
 
 1. **Survey.** Takes the facts that frame everything from git and the tree: the branches and their
-   versions, the release skill installed and its settings, the project's own instructions and the
-   memory notes that bear on the source plan, the test count and the build's cautions, the size of
-   what is replaced, and the precedent commit whose touched files are the seam list a milestone
-   copies.
+   versions, the release, executioner and guide skills installed, with the release skill's
+   settings, the project's own instructions and the memory notes that bear on the source plan,
+   the test count and the build's cautions, the size of what is replaced, and the precedent
+   commit whose touched files are the seam list a milestone copies.
 2. **Size.** From the survey, the effort the source plan calls for, high or xhigh, stated beside
    the thread's own setting; the run stops and waits where the thread is below it.
 3. **Explore.** One Explore subagent per area the source plan touches, very thorough, each asked
@@ -94,7 +94,11 @@ the execution plan goes beside the source plan at
 7. **Report.** The plan's absolute path; the plan shown rendered, through the plan-mode exit in
    plan mode or by opening the file in the editor otherwise; and the next step, `/executioner`
    with nothing after it in the same thread, or with the path as the first message of a fresh
-   thread.
+   thread, with `/executioner-guide` beside it, the executioner fresh and the guide in the
+   thread that laid out the plan where there is one, since that thread holds the design's
+   reasons. Where the executioner skill is not installed, the report says how the plan runs by
+   hand: each prompt pasted in order into a fresh thread, the release after each CLEAR, each
+   report read against the milestone's acceptance before the next prompt goes out.
 
 ## The plan's shape
 
@@ -123,6 +127,11 @@ not, a jump or a line's first version.
   of the plan is its contract, written in full so the executioner can re-read it from the file
   after its own context has been summarised; the two skills state the same rules, and a change to
   one is a change to the other.
+- `/executioner-guide` answers for the plan and changes it while the executioner runs it, in the
+  thread that holds the plan's making or in a fresh one given the path. What it adds follows the
+  shape this skill lays out, and §0 names the guide thread; where a change cannot wait for the
+  plan's order, it redirects the executioner by message, or writes a prompt for the user to paste
+  there at its next turn or into a fresh thread, in the same shape.
 - `/commit` closes each milestone: a milestone thread makes ordinary content commits, and the user
   runs the release skill afterwards for the review, the version and the changelog section. The
   plan's Commit lines say so, with the version written in only where the release skill's own

@@ -4,9 +4,12 @@
 // its own context. It reads files and changes nothing. Node 18 or later, no dependencies.
 //
 //     node tail.mjs --find "<text>" [--cwd <dir>] [--not <thread id>]
-//         list the transcripts of the project at <dir> (the working directory by default) whose
-//         text holds <text>, newest first, leaving out the thread named by --not (this thread's
-//         own id; the id in the environment when --not is omitted)
+//         list the transcripts of the project at <dir> (the working directory by default) in which
+//         a message a person typed holds <text>, newest first, each marked "first message" where
+//         that is the thread's first typed message, as a milestone thread's prompt is, and "later
+//         message" otherwise; a transcript that holds the words only in replies, tool output or a
+//         skill's text, such as the executioner's own handoffs, is not listed. The thread named by
+//         --not (this thread's own id; the id in the environment when --not is omitted) is left out
 //     node tail.mjs <transcript.jsonl> [--last <n>]
 //         print the text of the last <n> replies (default 2): the assistant's prose, any question
 //         it posed with AskUserQuestion, and the output of a command run directly in the thread,
@@ -69,17 +72,27 @@ if (option('--find') !== undefined) {
     if (self && name.startsWith(self)) continue;
     const path = join(dir, name);
     const body = readFileSync(path, 'utf8');
-    if (!body.includes(text)) continue;
-    let title = '', mode = '';
+    if (!body.includes(text)) continue; // a cheap reject before the records are parsed
+    // Only a message a person typed counts: a milestone thread's prompt is pasted as its first
+    // message, while a reply, a tool's output or a skill's expanded text may quote it anywhere.
+    let title = '', mode = '', hit = false, first = true, firstHit = false;
     for (const r of records(path)) {
       if (r.type === 'ai-title' && r.aiTitle) title = r.aiTitle;
-      if (r.type === 'user' && r.permissionMode) mode = r.permissionMode;
+      if (r.type !== 'user') continue;
+      if (r.permissionMode) mode = r.permissionMode;
+      if (r.isMeta || r.isSidechain || r.isCompactSummary) continue;
+      const t = textOf(r.message?.content);
+      if (!t.trim() || /^\[?tool_result/.test(t)) continue;
+      const holds = t.includes(text);
+      if (first) { firstHit = holds; first = false; }
+      if (holds) hit = true;
     }
-    found.push({ path, mtime: statSync(path).mtime, size: body.length, title, mode });
+    if (!hit) continue;
+    found.push({ path, mtime: statSync(path).mtime, size: body.length, title, mode, firstHit });
   }
   found.sort((a, b) => b.mtime - a.mtime);
-  if (found.length === 0) console.log(`no transcript under ${dir} holds "${text}"`);
-  for (const f of found) console.log(`${f.mtime.toISOString()}  ${String(f.size).padStart(9)}  ${f.mode.padEnd(6)}  ${f.path}  ${f.title}`);
+  if (found.length === 0) console.log(`no transcript under ${dir} holds "${text}" in a typed message`);
+  for (const f of found) console.log(`${f.mtime.toISOString()}  ${String(f.size).padStart(9)}  ${f.mode.padEnd(6)}  ${f.firstHit ? 'first message' : 'later message'}  ${f.path}  ${f.title}`);
   process.exit(0);
 }
 
@@ -109,8 +122,9 @@ for (const r of all) {
   } else {
     const top = messages[messages.length - 1];
     if (top && top.role === 'assistant') top.closed = true;
-    // A skill's expanded text and the harness's caveats are marked isMeta: no person typed them.
-    if (r.isMeta) continue;
+    // A skill's expanded text and the harness's caveats are marked isMeta, and the summary that
+    // replaces a compacted context isCompactSummary: no person typed them.
+    if (r.isMeta || r.isCompactSummary) continue;
     // A user record that is only tool results carries no prose; keep the ones a person typed.
     if (text.trim() && !/^\[?tool_result/.test(text)) messages.push({ role: 'user', text, record: r });
   }

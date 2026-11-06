@@ -1,5 +1,5 @@
 # Claude-Skills
-Claude skills to accelerate and enhance project workflow by compiling plans into precise execution plans, running those plans milestone by milestone from a manager thread, and autonomously analyzing, staging, and committing workspace changes.
+Claude skills to accelerate and enhance project workflow by compiling plans into precise execution plans, running those plans milestone by milestone from a manager thread, thinking about and changing them from a companion thread while they run, and autonomously analyzing, staging, and committing workspace changes.
 
 ## Skills
 
@@ -14,6 +14,14 @@ Claude skills to accelerate and enhance project workflow by compiling plans into
   thread, reviews each result against the plan's acceptance checks, folds the corrections into the
   plan, says how to proceed, and ends every message with the effort the next turn needs. It reads
   everything and writes only the plan. See its [README](skills/executioner/README.md).
+- [executioner-guide](skills/executioner-guide/) — `/executioner-guide` makes the thread it runs
+  in the executioner's companion: the user's questions about the plan, the code and the libraries
+  are answered there from the tree and their sources, additions and changes to the plan are
+  written there in the plan's own shape with every cross-reference carried and reported to the
+  executioner, and an audit is made there where the user asks for one. It changes nothing but the
+  plan and restates no step, and writes a prompt only where a change cannot wait for the plan's
+  order: a redirect for the executioner, or the first message of a fresh thread. See its
+  [README](skills/executioner-guide/README.md).
 - [commit](skills/commit/) — `/commit` reviews everything since the last reviewed point, fixes
   what can still be fixed, commits the working tree as itemised commits with real messages, keeps
   the README and docs true, and ends with a version commit, with a changelog section, where the
@@ -22,16 +30,22 @@ Claude skills to accelerate and enhance project workflow by compiling plans into
 
 ## The workflow
 
-The three skills are one loop. A plan laid out in a thread goes to `/execution-runbook`, run in
+Three of the skills are one loop. A plan laid out in a thread goes to `/execution-runbook`, run in
 that thread or in a fresh one given the plan's path, which explores the code, asks what the plan
 leaves open, writes the execution plan and stress-tests it. `/executioner` then runs the execution
 plan, in the same thread or in a fresh one given its path, and hands over the first milestone's
 prompt; each milestone runs in its own fresh thread on the model and effort the plan names, makes
-ordinary content commits, and ends with a verdict. On a `CLEAR` the user runs `/commit` for the
-review, the version and the changelog section, then says "Continue" to the executioner, which
-reviews the result, folds the thread's corrections into the plan, and hands over the next prompt.
-The plan file is the state throughout: what each thread needs is in it, and nothing travels by
-memory.
+ordinary content commits, and ends with a verdict. The user says "Done" to the executioner,
+which reviews the result, folds the thread's corrections into the plan, and hands over the next
+prompt with the release steps to run first: `/commit` for the review, the version and the
+changelog section, after which the next milestone's thread starts. The next review reads what
+that release corrected. Beside the loop, `/executioner-guide` holds the thread the user thinks in
+while it runs: questions about the plan and the code are answered there, and what the user decides
+to add or change goes into the plan from there, in its own shape, with the executioner told and
+reading it from the file at its next turn, or, where the change cannot wait for the plan's order,
+as a redirect sent to the executioner, or a prompt the user pastes into it at its next turn or
+into a fresh thread. The plan file is the state throughout: what each thread needs is in it, and
+nothing travels by memory.
 
 ## Baseline
 

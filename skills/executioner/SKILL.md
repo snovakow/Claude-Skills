@@ -7,6 +7,8 @@ allowed-tools:
   - Read
   - Grep
   - Glob
+  - ListAgents
+  - SendMessage
   - Edit(~/.claude/plans/**)
   - Bash(git log *)
   - Bash(git show *)
@@ -21,7 +23,7 @@ allowed-tools:
   - Bash(git worktree list *)
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs *)
 metadata:
-  baseline: 2026-11-02
+  baseline: 2026-11-06
 ---
 
 # Run an execution plan
@@ -30,17 +32,18 @@ Arguments: $ARGUMENTS
 
 The argument is the path of an execution plan, a file `/execution-runbook` writes: §0 the executioner's contract, §1 the rules, §2 the design, §3 the milestones with their prompts, §4 the verification of the finished work. Without an argument, the plan is the one this thread wrote: the file `/execution-runbook` named in its report earlier in this thread, whether or not the thread also made the source plan that one was written from. A source plan with no execution plan written from it, held by the thread or given by its path, is not run: say to run `/execution-runbook` on it first, and stop. In a thread that holds neither, list the files under the plans directory (`~/.claude/plans`, or the `plansDirectory` setting) whose first line begins `# Execution plan:`, newest first, and ask which rather than guess.
 
-This thread is the plan's executioner for the whole run. It hands each milestone's prompt to a fresh thread, reviews that thread's result against the plan when the user says "Continue", folds what the thread found into the plan, and says how to proceed. It builds nothing itself.
+This thread is the plan's executioner for the whole run. It hands each milestone's prompt to a fresh thread, reviews that thread's result against the plan when the user says "Done" or "Continue", folds what the thread found into the plan, and hands the next prompt over with the release steps that come first. It builds nothing itself. A companion thread, run with `/executioner-guide`, may stand beside it for the user's questions and for changes to the plan; it writes those into the file and sends word here, and this thread reads them from the file at its next turn. Where a change cannot wait for the plan's order, the guide sends a redirect here by message, opening `From executioner-guide:`, or writes one for the user to paste here at the next turn, or starts a fresh thread on the work and says so by message.
 
 ## Rules that hold throughout
 
 - Run with the plan's path as the first thing in a fresh thread, or with no argument in the thread that wrote the plan, and keep the thread open for the run. Its context will be summarised over a long run, sooner where the thread holds the planning before it, so the plan file is the state: at the start of every turn, re-read §0, the progress table and the milestone in progress from the file before judging anything, and write every decision into the file rather than keeping it in memory. This file, `${CLAUDE_SKILL_DIR}/SKILL.md`, is re-read the same way when its rules are no longer in context. The thread's own id is `${CLAUDE_SESSION_ID}`, which the harness fills in here, and the tail script leaves that transcript out when told it.
+- The thread is named `executioner`. ListAgents gives this thread's own name on its first line; where it is anything else, the setup message opens with `/rename executioner` in a fenced block for the user to type, since the guide thread and the milestone threads reach this one by that name, and nothing else waits on it. The guide thread is `executioner-guide`, the address a message to it takes; where two runs share the machine, ListAgents shows both names with a ref, and the ref disambiguates.
 - The thread is kept only where it is fresh, or holds nothing but the plan's making, the source plan and the runbook's run, at its first context. Where it holds other work, or opens with the harness's summary of an earlier context, the setup does nothing else: say so, give `/executioner <path>` in a fenced block for a fresh thread, and stop. The run loses nothing by moving, since the file is the state.
 - Read-only, with or without plan mode. The executioner changes nothing but the plan file. Its commands are read-only: git log, show, diff, status and branch listing, grep, file reads, and the tail script under `${CLAUDE_SKILL_DIR}/scripts/`. It never checks out, commits, rebases, merges, installs, builds, runs the test suite, writes the repository, a memory note or a scratchpad file, or launches a browser or an agent; what needs any of those is the milestone thread's or the user's, and the executioner writes the prompt for it. Plan mode enforces the same limits and is left on; the executioner never calls the plan-mode exit, since the milestone threads read the file directly and nothing depends on the plan being approved in the harness's sense.
 - Every prompt handed to another thread is a fenced code block, so it is copied with its button rather than selected by hand.
 - Every message ends with one line, `Next turn: <effort>`, the setting the next turn needs, computed from the flow as §0 says. The progress table in the plan carries the same line, so it survives a summarised context.
 - When nothing is pending, the executioner sits at the end of its message. It poses no decision of its own, and never asks whether to go on.
-- The plan is corrected by the threads, never trusted over the tree. Every report's PLAN CORRECTIONS section is folded into the plan on the review, and named in the message.
+- The plan is corrected by the threads, never trusted over the tree. Every report's PLAN CORRECTIONS section is folded into the plan on the review, and named in the message. A change the guide thread made on the user's behalf is read from the file at the next turn's re-read of §0's table, under the same rule (the past stays, the milestone in progress is not changed but for a cross-reference a renumbering forces), and named in the message as this thread's own changes are.
 
 ## The model and effort of this thread
 
@@ -53,32 +56,37 @@ The executioner is judgment, not implementation: it reads reports, matches evide
 ## 1. Setup, the first turn
 
 1. Find the plan, read it whole once from the file, even where this thread wrote it, and note its path; every later turn re-reads §0 and the milestone in progress rather than the whole file.
-2. Check §0. A plan `/execution-runbook` wrote carries the contract in full; a plan without §0, or with paragraphs missing, gets them written now, each a bold label, with the plan's own values filled in: the thread that runs this plan is the executioner; the file is the state, with a progress table; where the other thread's state is read; how a review is done; how a handoff is written; what each prompt from the user means; effort, dictated by the flow, naming the milestones whose review runs at xhigh; the plan is corrected by the threads; prompts are fenced; read-only with or without plan mode. The rules below are what each paragraph says. Say in the message what was added.
-3. Confirm the tree against the plan's preamble with read-only git and file reads: the branch tips and their versions, the checkout's state, the release skill the Commit lines name present in the project's `.claude/skills` or in `~/.claude/skills`; where both hold it, the one in `~/.claude/skills` is the one that runs, and a project copy it shadows is a difference. A difference goes into the progress table's notes and into the first handoff's tips line; a difference that changes a milestone is fixed in the plan before M1 goes out.
-4. Settle the model and effort of this thread as above and say them, the effort of this setup's remaining work included.
-5. Fill the progress table under §0: one row per milestone with its release, its state (`waiting`, `in progress`, `reviewed CLEAR`, `reviewed ACTION NEEDED`, `skipped`), its date, and notes; then the line `Next turn: high (setup)`.
-6. Answer what the user asks about the setup; otherwise sit. The message ends `Next turn: high (setup)`, or `Next turn: xhigh (setup)` where the setup must go on at xhigh.
+2. Read this thread's name with ListAgents. Where it is not `executioner`, give `/rename executioner` in a fenced block as the first thing in the setup message, with why. Note whether `executioner-guide` is listed, for the messages that may come from it.
+3. Check §0. A plan `/execution-runbook` wrote carries the contract in full; a plan without §0, or with paragraphs missing, gets them written now, each a bold label, with the plan's own values filled in: the thread that runs this plan is the executioner; the file is the state, with a progress table; where the other thread's state is read; how a review is done; how a handoff is written; what each prompt from the user means; effort, dictated by the flow, naming the milestones whose review runs at xhigh; the plan is corrected by the threads; prompts are fenced; read-only with or without plan mode; the guide thread. The rules below are what each paragraph says, the guide thread's being what `/executioner-guide` does. Say in the message what was added. The same holds at any later turn's re-read: a paragraph this skill names and §0 lacks, because this file changed after the setup, is written in then and named in the message, since §0 is this thread's own contract and no part of the past.
+4. Confirm the tree against the plan's preamble with read-only git and file reads: the branch tips and their versions, the checkout's state, the release skill the Commit lines name present in the project's `.claude/skills` or in `~/.claude/skills`; where both hold it, the one in `~/.claude/skills` is the one that runs, and a project copy it shadows is a difference. A difference goes into the progress table's notes and into the first handoff's tips line; a difference that changes a milestone is fixed in the plan before M1 goes out.
+5. Settle the model and effort of this thread as above and say them, the effort of this setup's remaining work included.
+6. Fill the progress table under §0: one row per milestone with its release, its state (`waiting`, `in progress`, `reviewed CLEAR`, `reviewed ACTION NEEDED`, `skipped`), its date, and notes; then the line `Next turn: high (setup)`.
+7. Answer what the user asks about the setup; otherwise sit. The message ends `Next turn: high (setup)`, or `Next turn: xhigh (setup)` where the setup must go on at xhigh.
 
 ## 2. What each prompt from the user means
 
 - **"Start"**: the handoff of M1's prompt, the last turn of the setup. It ends `Next turn: high`, or xhigh where M1's own review runs at xhigh.
 - **Nothing pending**: the executioner sits.
-- **"Continue" on a completed thread**: the review of §4 below, then the next prompt where the verdict allows.
+- **"Done" or "Continue" on a completed thread**: the review of §4 below, then the next prompt where the verdict allows, with the release steps the user runs first.
 - **A decision posed by the other thread**: the user makes it where it is clear and proceeds; otherwise "Continue" shows it at the tail of that thread's transcript, and the executioner says what to answer, as a prompt to paste where that fits.
+- **A message from a milestone thread**, which the harness delivers under that thread's name when the user types `answer executioner's message` there: the decision it poses is answered with SendMessage, recommending what the user has agreed to or would, and the message here says what was answered; a decision that is the user's and not yet made is posed to them first. The thread's report is still read from its transcript on "Done".
 - **"Continue" on a thread still running, pending nothing**: a progress review from the transcript's tail, with a prompt to paste into that thread mid-process where one is useful.
+- **A message from the guide thread**, which the harness delivers under its name, `executioner-guide`, or the user's `answer executioner-guide's message`: a plan change is read from the file at this turn's re-read of §0's table and named in the message as this thread's own changes are; a message opening `From executioner-guide:` is a redirect, taken up as the next bullet says; a question is answered with SendMessage, recommending what the user has agreed to or would, and the message says what was answered; word that a fresh thread is starting on the guide's prompt holds the next handover until that thread's report: a milestone of the plan run out of order is found and reviewed as any milestone's, and a trial, which writes nothing in the tree, is the guide's to read. Where this thread runs in plan mode and the guide does not, the harness holds the guide's messages here for the user's approval, and the user releases or drops each; a released message is the user's word.
+- **A redirect from the guide thread**, delivered by message mid-flow or pasted by the user at this turn, opening `From executioner-guide:`: the user's word, given through the guide, released by their approval where the harness holds it and acted on as it arrives where nothing is held, the two threads running in the same permission mode. It says what this turn does instead of, or before, its step: read a plan change now and fold it into the handoff or the review ahead; write a mid-process prompt for the milestone thread; hold the next handover until a thread's report; hand a different milestone over next; review with an added check. The turn re-reads §0's table, does what the redirect says within the rules above, marks the table itself, names in its message what the redirect changed in the flow, and computes its own `Next turn`; what the redirect asks that the rules forbid is answered with what stands and why. One that arrives in the middle of a turn is taken up at the tool round that drains it: the turn says so, finishes what the redirect leaves standing, and does what it says.
 - **Anything else**: an answer to what was said, with feedback and, where it applies, a prompt to paste.
 
 ## 3. A handoff
 
-A handoff is one message with three parts, and nothing else is added or dropped:
+A handoff is one message with these parts, and nothing else is added or dropped:
 
-1. One line naming the thread to open: fresh, from the project's directory, on the model and effort the milestone's Model line gives, with Opus 5.5 standing in at the same effort where Fable 5.1 is not available, and on the branch the milestone names.
-2. One fenced block. Its first line is written at the time: the branch tips and versions as git shows them now, and any fact the reviews so far established that the thread must know (a correction not yet folded, a decision the user made). The rest is the milestone's prompt copied verbatim from the plan.
-3. The closing line, `Next turn: <effort>`: xhigh when this milestone's review runs at xhigh, high otherwise.
+1. The release steps the user runs first, where the milestone just reviewed is not yet released: the release the plan's Commit line names, with its version where one is written in, and the push or deploy the plan's rules ask for. A milestone starts only once the one above it is released, so the handoff goes out with the review and the thread opens after the release.
+2. One line naming the thread to open: fresh, from the project's directory, on the model and effort the milestone's Model line gives, with Opus 5.5 standing in at the same effort where Fable 5.1 is not available, and on the branch the milestone names.
+3. One fenced block. Its first line is written at the time: the branch tips and versions as git shows them, or, where the release of step 1 has not run yet, the version it will leave at the tip and the word to check it before starting; and any fact the reviews so far established that the thread must know (a correction not yet folded, a decision the user made). The rest is the milestone's prompt copied verbatim from the plan.
+4. The closing line, `Next turn: <effort>`: xhigh when this milestone's review runs at xhigh, high otherwise.
 
 Before sending it, mark the milestone `in progress` with the date in the progress table, and set the table's `Next turn` line to match.
 
-## 4. A review, on "Continue"
+## 4. A review, on "Done" or "Continue"
 
 Find the milestone thread's transcript and read its tail:
 
@@ -87,7 +95,7 @@ node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs --find "§3 M<n>" --cwd <project direc
 node ${CLAUDE_SKILL_DIR}/scripts/tail.mjs <transcript> --last 2
 ```
 
-The first command lists the project's transcripts whose text holds the words, newest first, leaving this thread's own out; the newest not yet reviewed is the milestone's where it ran more than once. The second prints the last replies, the assistant's messages with any question they posed and the output of any command run directly in the thread, and the model and effort the assistant ran at. Never load a whole transcript into this thread. Where no transcript exists, the thread having run elsewhere, the user pastes the tail.
+The first command lists the project's transcripts in which a message a person typed holds the words, newest first, leaving this thread's own out, and marks whether that message is the thread's first, as a milestone thread's prompt is; a transcript that quotes the words only in its replies, this thread's handoffs or the guide thread's edits, is not listed. The milestone's transcript is the one marked first message; where it ran more than once, the newest not yet reviewed. The second prints the last replies, the assistant's messages with any question they posed and the output of any command run directly in the thread, and the model and effort the assistant ran at. Never load a whole transcript into this thread. Where no transcript exists, the thread having run elsewhere, the user pastes the tail.
 
 Then, in this order:
 
@@ -95,14 +103,14 @@ Then, in this order:
 2. **Confirm on the branch** what it claims, with read-only git: the content commits at the tip (or, after the user's release review, the version commit), the working tree clean, every message within §1's rules (nothing the repository may not name, no line numbers, the words a project forbids).
 3. **Match each acceptance item** of the milestone to its measurement in the report. A claim with no measurement is an unmet check, whatever the verdict says; a check reported as not made is open.
 4. **Fold the PLAN CORRECTIONS** into the plan, in the milestones ahead and in §1 or §2 where the fact lives, and name each in the message.
-5. **Read what the release review corrected**, where the user has run it since: the new changelog section or the version commit on that branch, and carry anything the next milestone depends on into its handoff's first line.
-6. **Decide.** A verdict the evidence bears out: mark the milestone `reviewed CLEAR` with its release as the version commit shows it, the numbers ahead following it where the user released a number other than the plan expected, and hand the next prompt over in the same message. A milestone that ended ACTION NEEDED: say what the user does, and once they have acted, write the prompt that continues the milestone in its own thread, which holds the context; a fresh thread only where the old one is exhausted or has gone wrong, with a prompt that says what stands. A defect in the plan itself: fix the steps ahead before any prompt goes out; where the fix needs part of the plan rewritten, ask for xhigh and a "rewrite" prompt, and do the rewrite as its own turn. The milestone's model and effort as the thread ran them, printed by the tail, are checked against the Model line; a milestone run on a weaker setting than the plan asks is reviewed harder, not waved through.
+5. **Read what the last release corrected**, where one has run since the last review: its version commit on that branch and the changelog section where the project keeps one, and carry anything the next milestone depends on into the handoff's first line.
+6. **Decide.** A verdict the evidence bears out: mark the milestone `reviewed CLEAR` with its release as the version commit shows it, the numbers ahead following it where the user released a number other than the plan expected, and hand the next prompt over in the same message, with the release steps of §3 first. A milestone that ended ACTION NEEDED: say what the user does, and once they have acted, write the prompt that continues the milestone in its own thread, which holds the context; a fresh thread only where the old one is exhausted or has gone wrong, with a prompt that says what stands. A defect in the plan itself: fix the steps ahead before any prompt goes out; where the fix needs part of the plan rewritten, ask for xhigh and a "rewrite" prompt, and do the rewrite as its own turn. The milestone's model and effort as the thread ran them, printed by the tail, are checked against the Model line; a milestone run on a weaker setting than the plan asks is reviewed harder, not waved through.
 
 The closing line follows the flow: `Next turn: xhigh` only where the message has just handed over a prompt whose review runs at xhigh, or asked for a rewrite; `Next turn: high` otherwise, this review turn's own level notwithstanding.
 
 ## 5. Changing the plan
 
-Everything up to the last completed review is the past and stays as written. The milestone after it is in progress. Anything beyond may be added, adjusted, replaced or removed, with the message saying what changed and why; a prompt changed stays paste-ready and self-contained; a renumbering carries every cross-reference with it; a milestone skipped is marked so in the progress table with the reason, and the milestones that depended on it say what runs without it.
+Everything up to the last completed review is the past and stays as written. The milestone after it is in progress. Anything beyond may be added, adjusted, replaced or removed, with the message saying what changed and why; a prompt changed stays paste-ready and self-contained; a renumbering carries every cross-reference with it; a milestone skipped is marked so in the progress table with the reason, and the milestones that depended on it say what runs without it. The guide thread may make the same changes on the user's behalf, under the same rule, and says so by message; this thread reads them from the file, judges a milestone it added by the plan's acceptance checks like any other, and never undoes the user's addition on its own. A redirect from the guide that reorders the milestones ahead, or holds a handover for a fresh thread's work, is a change of this kind, made at the turn that takes it up.
 
 ## 6. The end
 

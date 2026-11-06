@@ -3,8 +3,12 @@
 An `/executioner` skill for Claude Code. It makes the thread it runs in the manager of an
 execution plan written by `/execution-runbook`: it hands each milestone's prompt to a fresh
 thread, reviews that thread's result against the plan's acceptance checks when the user says
-"Continue", folds the thread's corrections into the plan, says how to proceed, and ends every
-message with the effort the next turn needs. It reads everything and writes only the plan file.
+"Done", folds the thread's corrections into the plan, hands the next prompt over with the
+release steps that come first, and ends every message with the effort the next turn needs. It
+reads everything and writes only the plan file. A companion thread, `/executioner-guide`, may
+stand beside it for the user's questions and for changes to the plan, which it reads from the
+file at its next turn, and, where a change cannot wait for the plan's order, for a redirect sent
+here by message or pasted here at the next turn, or a fresh thread started on the guide's word.
 
 It is the generic form of the manager thread that ran one of the two plans this workflow comes
 from. That thread wrote its own contract into the plan's §0, and this skill carries the contract
@@ -45,13 +49,13 @@ otherwise Opus 5.5; high for the setup and from the first handoff, with the few 
 names at xhigh, and xhigh for a setup that must write §0 or reconcile the plan with the tree. Max is
 never dictated: Fable at max is the heaviest setting there is, and the effort is decided from the
 plan at run time rather than fixed in the skill. Its `allowed-tools` pre-approve, for the invoking
-turn, read-only git and the script below; the later turns run under the thread's permission mode,
-which is why plan mode is the fit: it holds the thread to the same limits. The plan's folder,
-`~/.claude/plans`, is a protected one that no rule pre-approves a write in: the thread's own plan
-file needs none, and any other plan there, whichever thread wrote it, is judged by auto mode's
-classifier, in plan mode too where auto mode is available, and asked about otherwise. The skill
-never asks for anything that changes the repository. The script needs Node 18 or later and
-nothing else.
+turn, read-only git, the script below, and the listing of and messages to other threads; the
+later turns run under the thread's permission mode, which is why plan mode is the fit: it holds
+the thread to the same limits. The plan's folder, `~/.claude/plans`, is a protected one that no
+rule pre-approves a write in: the thread's own plan file needs none, and any other plan there,
+whichever thread wrote it, is judged by auto mode's classifier, in plan mode too where auto mode
+is available, and asked about otherwise. The skill never asks for anything that changes the
+repository. The script needs Node 18 or later and nothing else.
 
 Without a path, the skill runs the execution plan the thread wrote, whether or not the thread also
 made the source plan that one was written from, so one thread can lay out a plan, turn it into an
@@ -62,25 +66,42 @@ execution plans under `~/.claude/plans` listed newest first. A thread that holds
 the plan's making, or was continued from a summary, is told to run the executioner fresh with the
 path: the plan file is the state, so the run loses nothing by moving.
 
+## The thread's name
+
+The thread is named `executioner`: the setup message opens with `/rename executioner` to type
+where the thread's name is anything else, since the guide thread, `/executioner-guide`, reaches
+this one by that name and is reached as `executioner-guide`; `claude --name executioner` names a
+fresh thread as it starts. Where two runs share the machine, the listing of threads shows both
+names with a ref, and the ref tells them apart. A change the guide thread makes to the plan is
+read from the file at the next turn, which re-reads the progress table before anything else, and
+named in the message as this thread's own changes are. A message from a thread in another
+permission mode is held here for the user's approval, so with this thread in plan mode and the
+guide in default or auto the user releases each of the guide's messages, and one left
+unapproved expires; in the same mode nothing is held, and a redirect is acted on as it arrives.
+
 ## How a run goes
 
-1. **Setup**, the first turn. The plan is read whole once; §0 is checked for the contract
-   and written in where a plan lacks it; the tree is confirmed against the plan's preamble; the
-   model and effort for the thread are stated; a progress table is filled under §0, one row per
+1. **Setup**, the first turn. The plan is read whole once; the thread's name is read and the
+   `/rename executioner` to type is given where it differs; §0 is checked for the contract and
+   written in where a plan lacks it; the tree is confirmed against the plan's preamble; the model
+   and effort for the thread are stated; a progress table is filled under §0, one row per
    milestone; the message ends `Next turn: high (setup)`.
 2. **"Start"** hands M1's prompt over: one line naming the thread to open and its model and effort,
    one fenced block holding the branch tips and versions as git shows them and the prompt copied
    verbatim from the plan, and the closing `Next turn` line. The user pastes the block into a
    fresh thread and lets it run.
-3. **"Continue"** reviews the result: the milestone thread's transcript is found by the prompt's
-   opening words and its tail is read with `tail.mjs`; the branch is checked with read-only git;
-   each acceptance item is matched to a measurement in the report, an unmeasured claim counting as
-   unmet whatever the verdict says; the PLAN CORRECTIONS are folded into the plan and named; what
-   the release review corrected is carried into the next handoff; then the next prompt goes over,
-   or the prompt that continues a milestone the user has acted on.
+3. **"Done"** reviews the result: the milestone thread's transcript is the one the script lists
+   with the prompt's words in its first typed message, and its tail is read with `tail.mjs`; the
+   branch is checked with read-only git; each acceptance item is matched to a measurement in the
+   report, an unmeasured claim counting as unmet whatever the verdict says; the PLAN CORRECTIONS
+   are folded into the plan and named; what the last release corrected is carried into the next
+   handoff; then the next prompt goes over, with the release steps the user runs first, or the
+   prompt that continues a milestone the user has acted on. The next thread opens once that
+   release has run.
 4. **Anything else** gets an answer, with a prompt to paste where one applies. A decision the other
    thread posed is the user's to make where it is clear; otherwise "Continue" shows it and the
-   executioner says what to answer.
+   executioner says what to answer, or the user has that thread message this one with
+   `answer executioner's message`, and the answer goes back by message.
 5. **The end**: §4 of the plan, the verification of the finished work, goes over as a final prompt
    and is reviewed the same way, and the run is recorded complete.
 
@@ -92,17 +113,30 @@ line; an xhigh turn at any other setting stops and asks for the change.
 ## The script
 
 `scripts/tail.mjs` finds and reads another thread's transcript, and changes nothing.
-`--find "<text>" --cwd <dir>` lists the project's transcripts whose text holds the words, newest
-first, leaving this thread's own out; `<transcript> --last <n>` prints the last replies, which are
-the assistant's messages with any question they posed and the output of any command run directly
-in the thread, such as a forked skill the user typed, then the model and effort the assistant ran
-at. Transcripts live under `~/.claude/projects/<folder>`, the folder being the working directory
-with every character that is not a letter or a digit replaced by `-`.
+`--find "<text>" --cwd <dir>` lists the project's transcripts in which a message a person typed
+holds the words, newest first, leaving this thread's own out, and marks the ones where that is
+the thread's first message, as a milestone thread's prompt is; a transcript that only quotes the
+words in its replies, such as this thread's handoffs, is not listed. `<transcript> --last <n>`
+prints the last replies, which are the assistant's messages with any question they posed and the
+output of any command run directly in the thread, such as a forked skill the user typed, then the
+model and effort the assistant ran at. Transcripts live under `~/.claude/projects/<folder>`, the
+folder being the working directory with every character that is not a letter or a digit replaced
+by `-`.
 
 ## With the other skills
 
 - `/execution-runbook` writes the plan this skill runs, §0 included. The two skills state the
   same contract; a change to one is a change to the other.
+- `/executioner-guide` is the companion thread: the user's questions about the plan and the code
+  go there, and so do additions and changes to the plan, which that thread writes into the file
+  in the plan's own shape and reports here by message; this thread reads them from the file at
+  its next turn and judges the milestones it added like any other. Where a change cannot wait for
+  the plan's order, the guide sends a redirect here by message, or writes one for the user to
+  paste at the next turn, opening `From executioner-guide:` and read as the user's word once
+  their approval releases it, or the first message of a fresh thread, a trial or a milestone run
+  out of order, whose report this thread reviews where it is a milestone's while holding its next
+  handover. The two reach each other by their threads' names, `executioner` and
+  `executioner-guide`.
 - `/commit` is the release review the plan's Commit lines name. The executioner never runs it: the
   user does, after a milestone's CLEAR, and the next review reads the changelog section it wrote
   for what it corrected.
