@@ -40,6 +40,10 @@ ln -sn "$PWD/skills/executioner-guide" /path/to/project/.claude/skills/execution
 echo .claude/skills/executioner-guide >> /path/to/project/.git/info/exclude
 ```
 
+With `/link-skill`, the three lines are one command: `/link-skill executioner-guide
+/path/to/project` from the clone, or `/link-skill executioner-guide` from the project; both
+skills go in one run as `/link-skill executioner executioner-guide /path/to/project`.
+
 A copy, for a project's own version, also from the root of the Claude-Skills clone:
 
 ```bash

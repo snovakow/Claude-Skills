@@ -1,5 +1,8 @@
 # Claude-Skills
-Claude skills to accelerate and enhance project workflow by compiling plans into precise execution plans, running those plans milestone by milestone from a manager thread, thinking about and changing them from a companion thread while they run, and autonomously analyzing, staging, and committing workspace changes.
+Claude skills to accelerate and enhance project workflow by compiling plans into precise execution
+plans, running those plans milestone by milestone from a manager thread, thinking about and changing
+them from a companion thread while they run, autonomously analyzing, staging, and committing
+workspace changes, and linking any of the skills into a project with one command.
 
 ## Skills
 
@@ -27,6 +30,11 @@ Claude skills to accelerate and enhance project workflow by compiling plans into
   the README and docs true, and ends with a version commit, with a changelog section, where the
   project keeps them. It never pushes. Runs as it is in a new repository; the settings at the top
   of the skill and of its scan adapt it to a project. See its [README](skills/commit/README.md).
+- [link-skill](skills/link-skill/) — `/link-skill` links a skill of this clone into a project's
+  `.claude/skills` and keeps the link out of the project's history, from the clone or from the
+  project, with the arguments worked out from where it runs; with nothing after it, it links
+  itself at the user level where it is not there yet and lists the skills and the links in place.
+  It runs in the clone as checked out. See its [README](skills/link-skill/README.md).
 
 ## The workflow
 
@@ -94,6 +102,13 @@ The link reads whatever this clone has on disk, the branch checked out here and 
 included, and an edit made through it, by hand or by a thread in the project, is an edit to this
 repository.
 
+With `/link-skill`, the three commands are one, from either repository: `/link-skill
+executioner /path/to/project` in the clone, or `/link-skill executioner` in the project, which
+finds the clone that `/link-skill` itself was linked from; a bare name is a folder beside the
+one it runs in. The clone carries a link to that skill under its own `.claude/skills`, so it
+runs there as checked out, and a bare `/link-skill` links it at the user level for every
+repository and prints the help. See its [README](skills/link-skill/README.md).
+
 **A copy** is for a project that needs its own version, such as `/commit` with the project's
 settings, or for a skill that is committed with the project, so that every clone of the project
 has it. A copy is checked against this repository as its skill's README describes under *Keeping
@@ -119,7 +134,9 @@ version of that name, and every such version must be renamed and run by its new 
 skill run unmodified in nearly every project, where no project keeps a version of its own. It
 suits `/commit` least, since a project copy of `/commit` is adapted by design. It is made with the
 same commands, with `~/.claude/skills/` as the destination and no exclude line; as a link it
-stays current, and as a copy it is checked like any copy.
+stays current, and as a copy it is checked like any copy. `/link-skill` is the exception that
+suits it: it is run from any repository, no project keeps a version of its own, and a bare
+`/link-skill` puts it there as a link.
 
 ## Instructions
 

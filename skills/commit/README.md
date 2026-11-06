@@ -33,6 +33,9 @@ ln -sn "$PWD/skills/commit" /path/to/project/.claude/skills/commit
 echo .claude/skills/commit >> /path/to/project/.git/info/exclude
 ```
 
+With `/link-skill`, `/link-skill commit /path/to/project` from the clone, or `/link-skill commit`
+from the project, does the same.
+
 A linked skill's settings are this repository's, and an edit made through the link edits them here:
 to adapt the skill, turn the link into a copy first, as the repository's
 [Install](../../README.md#install) describes. A link or copy at `~/.claude/skills/commit` is not
