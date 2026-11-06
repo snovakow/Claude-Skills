@@ -24,7 +24,8 @@ ln -sn "$PWD/skills/link-skill" ~/.claude/skills/link-skill
 
 No exclude line is needed there. It can also be linked into one project like any other skill,
 `/link-skill link-skill /path/to/project` from the clone, after which `/link-skill` runs in that
-project only.
+project. A bare run there links it at the user level all the same, and from then on it runs in
+every repository; `--help` is the help without that.
 
 ## Usage
 
