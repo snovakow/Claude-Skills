@@ -3,13 +3,16 @@
 // tail, so the executioner reads a milestone thread's report without loading the whole file into
 // its own context. It reads files and changes nothing. Node 18 or later, no dependencies.
 //
-//     node tail.mjs --find "<text>" [--cwd <dir>] [--not <thread id>]
+//     node tail.mjs --find "<text>" [--exact] [--cwd <dir>] [--not <thread id>]
 //         list the transcripts of the project at <dir> (the working directory by default) in which
 //         a message a person typed holds <text>, newest first, each marked "first message" where
 //         that is the thread's first typed message, as a milestone thread's prompt is, and "later
 //         message" otherwise; a transcript that holds the words only in replies, tool output or a
 //         skill's text, such as the executioner's own handoffs, is not listed. The thread named by
-//         --not (this thread's own id; the id in the environment when --not is omitted) is left out
+//         --not (this thread's own id; the id in the environment when --not is omitted) is left
+//         out. With --exact, a typed message counts only where it is <text> alone, as a forked
+//         command the user typed is, so that a message that merely mentions the words does not
+//         match
 //     node tail.mjs <transcript.jsonl> [--last <n>]
 //         print the text of the last <n> replies (default 2): the assistant's prose, any question
 //         it posed with AskUserQuestion, and the output of a command run directly in the thread,
@@ -63,6 +66,7 @@ const cut = (s) => (s.length > BLOCK_MAX ? `${s.slice(0, BLOCK_MAX)}\n[... ${s.l
 
 if (option('--find') !== undefined) {
   const text = option('--find');
+  const exact = args.includes('--exact'); // the whole typed message is the text, as a forked command's record is
   const dir = projectFolder(option('--cwd') ?? process.cwd());
   const self = option('--not') ?? process.env.CLAUDE_CODE_SESSION_ID ?? process.env.CLAUDE_SESSION_ID ?? '';
   let names;
@@ -83,7 +87,7 @@ if (option('--find') !== undefined) {
       if (r.isMeta || r.isSidechain || r.isCompactSummary) continue;
       const t = textOf(r.message?.content);
       if (!t.trim() || /^\[?tool_result/.test(t)) continue;
-      const holds = t.includes(text);
+      const holds = exact ? t.trim() === text : t.includes(text);
       if (first) { firstHit = holds; first = false; }
       if (holds) hit = true;
     }
@@ -96,7 +100,7 @@ if (option('--find') !== undefined) {
   process.exit(0);
 }
 
-if (!file) { console.error('usage: tail.mjs --find "<text>" [--cwd <dir>] [--not <id>]  |  tail.mjs <transcript.jsonl> [--last <n>]'); process.exit(2); }
+if (!file) { console.error('usage: tail.mjs --find "<text>" [--exact] [--cwd <dir>] [--not <id>]  |  tail.mjs <transcript.jsonl> [--last <n>]'); process.exit(2); }
 
 const last = Number(option('--last') ?? 2);
 // A command run directly in the thread, such as a forked skill the user typed, leaves no assistant

@@ -116,12 +116,13 @@ line; an xhigh turn at any other setting stops and asks for the change.
 `--find "<text>" --cwd <dir>` lists the project's transcripts in which a message a person typed
 holds the words, newest first, leaving this thread's own out, and marks the ones where that is
 the thread's first message, as a milestone thread's prompt is; a transcript that only quotes the
-words in its replies, such as this thread's handoffs, is not listed. `<transcript> --last <n>`
-prints the last replies, which are the assistant's messages with any question they posed and the
-output of any command run directly in the thread, such as a forked skill the user typed, then the
-model and effort the assistant ran at. Transcripts live under `~/.claude/projects/<folder>`, the
-folder being the working directory with every character that is not a letter or a digit replaced
-by `-`.
+words in its replies, such as this thread's handoffs, is not listed, and with `--exact` a typed
+message counts only where it is the text alone, as a forked command the user typed is.
+`<transcript> --last <n>` prints the last replies, which are the assistant's messages with any
+question they posed and the output of any command run directly in the thread, such as a forked
+skill the user typed, then the model and effort the assistant ran at. Transcripts live under
+`~/.claude/projects/<folder>`, the folder being the working directory with every character that
+is not a letter or a digit replaced by `-`.
 
 ## With the other skills
 
