@@ -32,9 +32,10 @@ workspace changes, and linking any of the skills into a project with one command
   of the skill and of its scan adapt it to a project. See its [README](skills/commit/README.md).
 - [link-skill](skills/link-skill/) — `/link-skill` links a skill of this clone into a project's
   `.claude/skills` and keeps the link out of the project's history, from the clone or from the
-  project, with the arguments worked out from where it runs; with nothing after it, it links
-  itself at the user level where it is not there yet and lists the skills and the links in place.
-  It runs in the clone as checked out. See its [README](skills/link-skill/README.md).
+  project, with the arguments worked out from where it runs. With nothing after it, it links
+  every other skill of the clone into a project, and in the clone it links itself at the user
+  level where it is not there yet and lists the skills. It runs in the clone as checked out. See its
+  [README](skills/link-skill/README.md).
 
 ## The workflow
 
@@ -107,7 +108,8 @@ executioner /path/to/project` in the clone, or `/link-skill executioner` in the 
 finds the clone that `/link-skill` itself was linked from; a bare name is a folder beside the
 one it runs in. The clone carries a link to that skill under its own `.claude/skills`, so it
 runs there as checked out, and a bare `/link-skill` links it at the user level for every
-repository and prints the help. See its [README](skills/link-skill/README.md).
+repository and prints the help. From then on, a bare `/link-skill` in a project links every
+other skill of the clone into it at once. See its [README](skills/link-skill/README.md).
 
 **A copy** is for a project that needs its own version, such as `/commit` with the project's
 settings, or for a skill that is committed with the project, so that every clone of the project
@@ -136,7 +138,7 @@ suits `/commit` least, since a project copy of `/commit` is adapted by design. I
 same commands, with `~/.claude/skills/` as the destination and no exclude line; as a link it
 stays current, and as a copy it is checked like any copy. `/link-skill` is the exception that
 suits it: it is run from any repository, no project keeps a version of its own, and a bare
-`/link-skill` puts it there as a link.
+`/link-skill` in the clone puts it there as a link.
 
 ## Instructions
 
