@@ -46,9 +46,9 @@ plan, in the same thread or in a fresh one given its path, and hands over the fi
 prompt; each milestone runs in its own fresh thread on the model and effort the plan names, makes
 ordinary content commits, and ends with a verdict. The user says "Done" to the executioner,
 which reviews the result, folds the thread's corrections into the plan, and hands over the next
-prompt with the release steps to run first: `/commit` for the review, the version and the
-changelog section, after which the next milestone's thread starts. The next review reads what
-that release corrected. Beside the loop, `/executioner-guide` holds the thread the user thinks in
+step alone: `/commit` for the review, the version and the changelog section, then, on the "Done"
+that confirms it, the next milestone's prompt. The next review reads what that release
+corrected. Beside the loop, `/executioner-guide` holds the thread the user thinks in
 while it runs: questions about the plan and the code are answered there, and what the user decides
 to add or change goes into the plan from there, in its own shape, with the executioner told and
 reading it from the file at its next turn, or, where the change cannot wait for the plan's order,

@@ -3,8 +3,8 @@
 An `/executioner` skill for Claude Code. It makes the thread it runs in the manager of an
 execution plan written by `/execution-runbook`: it hands each milestone's prompt to a fresh
 thread, reviews that thread's result against the plan's acceptance checks when the user says
-"Done", folds the thread's corrections into the plan, hands the next prompt over with the
-release steps that come first, and ends every message with the effort the next turn needs. It
+"Done", folds the thread's corrections into the plan, hands over what follows one step at a time,
+the release before the next prompt, and ends every message with the effort the next turn needs. It
 reads everything and writes only the plan file. A companion thread, `/executioner-guide`, may
 stand beside it for the user's questions and for changes to the plan, which it reads from the
 file at its next turn, and, where a change cannot wait for the plan's order, for a redirect sent
@@ -99,10 +99,12 @@ unapproved expires; in the same mode nothing is held, and a redirect is acted on
    branch is checked with read-only git; each acceptance item is matched to a measurement in the
    report, an unmeasured claim counting as unmet whatever the verdict says; the PLAN CORRECTIONS
    are folded into the plan and named; what the last release corrected is carried into the next
-   handoff; then the next prompt goes over, with the release steps the user runs first, each a fresh
-   thread of its own, a prompt with its model and effort named and a release with none where the
-   skill's frontmatter sets its own, or the prompt that continues a milestone the user has acted
-   on. The next thread opens once that release has run.
+   handoff; then the next step goes over alone, a fresh thread of its own: a commit
+   the release waits for, then the release (a prompt names its model and effort, a release names
+   none where the skill's frontmatter sets its own), then, on the "Done" that confirms it, the
+   next milestone's prompt, or the prompt that continues a milestone the user has acted on. Steps
+   go together only where they can run at once, and the message says so; the table's `Pending`
+   line names the step out.
 4. **Anything else** gets an answer, with a prompt to paste where one applies. A decision the other
    thread posed is the user's to make where it is clear; otherwise "Continue" shows it and the
    executioner says what to answer, or the user has that thread message this one with
