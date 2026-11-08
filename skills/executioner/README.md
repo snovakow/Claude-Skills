@@ -89,18 +89,20 @@ unapproved expires; in the same mode nothing is held, and a redirect is acted on
    written in where a plan lacks it; the tree is confirmed against the plan's preamble; the model
    and effort for the thread are stated; a progress table is filled under §0, one row per
    milestone; the message ends `Next turn: high (setup)`.
-2. **"Start"** hands M1's prompt over: one line naming the thread to open and its model and effort,
-   one fenced block holding the branch tips and versions as git shows them and the prompt copied
-   verbatim from the plan, and the closing `Next turn` line. The user pastes the block into a
-   fresh thread and lets it run.
+2. **"Start"** hands M1's prompt over: one line saying to paste the block as the first message of a
+   fresh thread and naming its model and effort, one fenced block written for that thread alone,
+   holding the branch tips and versions as git shows them and the prompt copied verbatim from the
+   plan, and the closing `Next turn` line. The user pastes the block into a fresh thread and lets
+   it run.
 3. **"Done"** reviews the result: the milestone thread's transcript is the one the script lists
    with the prompt's words in its first typed message, and its tail is read with `tail.mjs`; the
    branch is checked with read-only git; each acceptance item is matched to a measurement in the
    report, an unmeasured claim counting as unmet whatever the verdict says; the PLAN CORRECTIONS
    are folded into the plan and named; what the last release corrected is carried into the next
-   handoff; then the next prompt goes over, with the release steps the user runs first, or the
-   prompt that continues a milestone the user has acted on. The next thread opens once that
-   release has run.
+   handoff; then the next prompt goes over, with the release steps the user runs first, each a fresh
+   thread of its own, a prompt with its model and effort named and a release with none where the
+   skill's frontmatter sets its own, or the prompt that continues a milestone the user has acted
+   on. The next thread opens once that release has run.
 4. **Anything else** gets an answer, with a prompt to paste where one applies. A decision the other
    thread posed is the user's to make where it is clear; otherwise "Continue" shows it and the
    executioner says what to answer, or the user has that thread message this one with
@@ -142,8 +144,9 @@ is not a letter or a digit replaced by `-`.
   handover. The two reach each other by their threads' names, `executioner` and
   `executioner-guide`.
 - `/commit` is the release review the plan's Commit lines name. The executioner never runs it: the
-  user does, after a milestone's CLEAR, and the next review reads the changelog section it wrote
-  for what it corrected.
+  user does, after a milestone's CLEAR, in a fresh thread, on the model and effort its own
+  frontmatter sets where it declares them, which no release step need name, and the next review
+  reads the changelog section it wrote for what it corrected.
 
 ## Keeping a copy current
 
