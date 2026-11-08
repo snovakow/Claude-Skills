@@ -79,8 +79,9 @@ it, otherwise Opus 5.5, at high; a reply that designs a pipeline milestone or au
 says it calls for xhigh and goes on at the thread's setting unless the user changes it. Max is
 never dictated. It ends no message with a `Next turn` line and never adds a "Current step"
 section: the executioner restates the user's steps, and a step restated here drifts from the one
-the executioner holds. A prompt it writes for a fresh thread names that thread's model and
-effort, as a milestone's Model line does; a prompt for the executioner names none.
+the executioner holds. A prompt it writes for a fresh thread goes out as the executioner hands a
+milestone's over, the model and effort on the line above the block, as a milestone's Model line
+gives them; a prompt for the executioner names none.
 
 Its `allowed-tools` pre-approve, for the invoking turn, read-only git, the listing of and messages
 to other threads, and the executioner's script; the later turns run under the thread's permission
