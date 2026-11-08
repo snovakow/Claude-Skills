@@ -47,9 +47,9 @@ skill's own folder for that variable, so the path holds wherever the skill is in
 or a copy. The skill runs by hand only, at Opus and max effort, and stops unless `/commit` is the
 first thing in its thread, so the review starts from a clean context. The scan needs Node 18 or
 later and nothing else. The skill's `allowed-tools` pre-approve the commands that change something
-in a run, such as staging, committing and rebasing, and nothing broader; read-only git needs no
-grant. A push, a publish or an `npx` download therefore goes through the thread's usual permission
-check.
+in a run, such as staging, committing, rebasing and fast-forwarding, and nothing broader;
+read-only git needs no grant. A push, a publish or an `npx` download therefore goes through the
+thread's usual permission check.
 
 ## What a run does
 
@@ -62,8 +62,9 @@ stronger checkpoint: it lives in the history and travels with every clone, so a 
 costs nothing and a commit made by hand is still reviewed at the next release.
 
 1. **Survey.** Fetches, runs `scripts/scan.mjs`, and stops on anything that needs the user: an
-   operation in progress, a detached HEAD, a protected branch, a version changed by hand,
-   credentials in added lines, files that look like they should not be tracked.
+   operation in progress, a detached HEAD, a branch behind its upstream, which it fast-forwards
+   on the user's word where that is all the branch needs, a protected branch, a version changed
+   by hand, credentials in added lines, files that look like they should not be tracked.
 2. **Review.** Reads every commit since the baseline, the working-tree diff and every untracked
    file. Checks messages against diffs, comments against code, and prose for references a public
    reader cannot follow. Runs the project's checks for what changed.
