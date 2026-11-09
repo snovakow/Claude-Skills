@@ -6,18 +6,20 @@
 //     node tail.mjs --find "<text>" [--exact] [--cwd <dir>] [--not <thread id>]
 //         list the transcripts of the project at <dir> (the working directory by default) in which
 //         a message a person typed holds <text>, newest first, each marked "first message" where
-//         that is the thread's first typed message, as a milestone thread's prompt is, and "later
-//         message" otherwise; a transcript that holds the words only in replies, tool output or a
-//         skill's text, such as the executioner's own handoffs, is not listed. The thread named by
-//         --not (this thread's own id; the id in the environment when --not is omitted) is left
-//         out. With --exact, a typed message counts only where it is <text> alone, as a forked
-//         command the user typed is, so that a message that merely mentions the words does not
-//         match
+//         that is the thread's first typed message, as a milestone thread's prompt is (a command
+//         run directly in Claude Code before it, such as /rename, does not count), and "later
+//         message" otherwise, and each ending with the name the thread's tab shows: the name a
+//         /rename set, with the harness's title after it in brackets, or that title alone; a
+//         transcript that holds the words only in replies, tool output or a skill's text, such as
+//         the executioner's own handoffs, is not listed. The thread named by --not (this thread's
+//         own id; the id in the environment when --not is omitted) is left out. With --exact, a
+//         typed message counts only where it is <text> alone, as a forked command the user typed
+//         is, so that a message that merely mentions the words does not match
 //     node tail.mjs <transcript.jsonl> [--last <n>]
 //         print the text of the last <n> replies (default 2): the assistant's prose, any question
 //         it posed with AskUserQuestion, and the output of a command run directly in the thread,
 //         such as a forked skill the user typed; with the messages a person typed after them; then
-//         the model, effort and time of the last assistant message
+//         the model, effort and time of the last assistant message, and the name the tab shows
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -64,6 +66,11 @@ const textOf = (content) => {
 
 const cut = (s) => (s.length > BLOCK_MAX ? `${s.slice(0, BLOCK_MAX)}\n[... ${s.length - BLOCK_MAX} more characters]` : s);
 
+// The name a thread's tab shows: the name /rename set, with the harness's title after it, or that
+// title alone. A caveat record is what the harness writes beside a command run directly in it.
+const tabName = (custom, title) => (custom ? (title ? `${custom}  [${title}]` : custom) : title);
+const isCaveat = (r) => Boolean(r?.isMeta) && /^\s*<local-command-caveat>/.test(textOf(r.message?.content));
+
 if (option('--find') !== undefined) {
   const text = option('--find');
   const exact = args.includes('--exact'); // the whole typed message is the text, as a forked command's record is
@@ -79,24 +86,32 @@ if (option('--find') !== undefined) {
     if (!body.includes(text)) continue; // a cheap reject before the records are parsed
     // Only a message a person typed counts: a milestone thread's prompt is pasted as its first
     // message, while a reply, a tool's output or a skill's expanded text may quote it anywhere.
-    let title = '', mode = '', hit = false, first = true, firstHit = false;
+    let title = '', custom = '', mode = '', hit = false, first = true, firstHit = false;
+    const users = [];
     for (const r of records(path)) {
       if (r.type === 'ai-title' && r.aiTitle) title = r.aiTitle;
-      if (r.type !== 'user') continue;
+      if (r.type === 'custom-title' && r.customTitle) custom = r.customTitle; // what /rename set
+      if (r.type === 'user') users.push(r);
+    }
+    for (let i = 0; i < users.length; i++) {
+      const r = users[i];
       if (r.permissionMode) mode = r.permissionMode;
       if (r.isMeta || r.isSidechain || r.isCompactSummary) continue;
       const t = textOf(r.message?.content);
       if (!t.trim() || /^\[?tool_result/.test(t)) continue;
+      // A command run directly in Claude Code, such as /rename, is a user record with a caveat
+      // record beside it; a skill's command has none. The former is not a message a person typed.
+      if (/^\s*<command-name>/.test(t) && (isCaveat(users[i - 1]) || isCaveat(users[i + 1]))) continue;
       const holds = exact ? t.trim() === text : t.includes(text);
       if (first) { firstHit = holds; first = false; }
       if (holds) hit = true;
     }
     if (!hit) continue;
-    found.push({ path, mtime: statSync(path).mtime, size: body.length, title, mode, firstHit });
+    found.push({ path, mtime: statSync(path).mtime, size: body.length, name: tabName(custom, title), mode, firstHit });
   }
   found.sort((a, b) => b.mtime - a.mtime);
   if (found.length === 0) console.log(`no transcript under ${dir} holds "${text}" in a typed message`);
-  for (const f of found) console.log(`${f.mtime.toISOString()}  ${String(f.size).padStart(9)}  ${f.mode.padEnd(6)}  ${f.firstHit ? 'first message' : 'later message'}  ${f.path}  ${f.title}`);
+  for (const f of found) console.log(`${f.mtime.toISOString()}  ${String(f.size).padStart(9)}  ${f.mode.padEnd(6)}  ${f.firstHit ? 'first message' : 'later message'}  ${f.path}  ${f.name}`);
   process.exit(0);
 }
 
@@ -106,7 +121,13 @@ const last = Number(option('--last') ?? 2);
 // A command run directly in the thread, such as a forked skill the user typed, leaves no assistant
 // message: its output is a system record of subtype local_command.
 const isCommandOutput = (r) => r.type === 'system' && r.subtype === 'local_command';
-const all = records(file).filter((r) => (r.type === 'user' || r.type === 'assistant' || isCommandOutput(r)) && !r.isSidechain);
+const everything = records(file);
+let tabTitle = '', tabCustom = '';
+for (const r of everything) {
+  if (r.type === 'ai-title' && r.aiTitle) tabTitle = r.aiTitle;
+  if (r.type === 'custom-title' && r.customTitle) tabCustom = r.customTitle;
+}
+const all = everything.filter((r) => (r.type === 'user' || r.type === 'assistant' || isCommandOutput(r)) && !r.isSidechain);
 // Group the assistant's consecutive records into messages; a user record or a command's output
 // ends a message.
 const messages = [];
@@ -144,7 +165,7 @@ for (const m of messages.slice(from)) {
 const lastAssistant = [...all].reverse().find((r) => r.type === 'assistant');
 if (lastAssistant) {
   const m = lastAssistant.message ?? {};
-  console.log(`\n---\nlast assistant record: ${lastAssistant.timestamp ?? ''}  model ${m.model ?? '?'}  effort ${lastAssistant.effort ?? lastAssistant.perTurnEffort ?? '?'}  cwd ${lastAssistant.cwd ?? '?'}`);
+  console.log(`\n---\nlast assistant record: ${lastAssistant.timestamp ?? ''}  model ${m.model ?? '?'}  effort ${lastAssistant.effort ?? lastAssistant.perTurnEffort ?? '?'}  cwd ${lastAssistant.cwd ?? '?'}  tab ${tabName(tabCustom, tabTitle) || '?'}`);
 }
 const lastRecord = all[all.length - 1];
 if (lastRecord?.type === 'user') console.log('the transcript ends on a user message: the thread may still be running, or was interrupted');

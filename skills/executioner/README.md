@@ -111,9 +111,9 @@ in the same mode nothing is held, and a message is acted on as it arrives.
    release names none where the skill's frontmatter sets its own), then, on the "Done" that
    confirms it, the next milestone's prompt. Steps go together only where they can run at once,
    and the message says so; the table's `Pending` line names the step out. The review ends with
-   a closing message to the thread: on CLEAR, that nothing more is asked of it; on ACTION NEEDED,
-   once the user has acted, the prompt that continues the milestone in that thread, sent there
-   rather than pasted.
+   a closing message to the thread: on CLEAR, that it is finished and its window is safe to
+   close, which the thread answers in one line; on ACTION NEEDED, once the user has acted, the
+   prompt that continues the milestone in that thread, sent there rather than pasted.
 4. **A question from a milestone thread**, sent here by message as its prompt asks, is answered by
    message from the plan where the plan decides it; a decision that is the user's is posed to them
    here first, with a recommendation, and the answer sent on once given. **Anything else** gets an
@@ -129,19 +129,29 @@ only where the message has just handed over a prompt whose review runs at xhigh,
 rewrite. At the start of each turn the thread checks the effort the harness shows against that
 line; an xhigh turn at any other setting stops and asks for the change.
 
+The line before `Next turn` names the windows. The user keeps one open for every thread of the
+run, and each message says which may close and which stay, by the names their tabs show, each
+with what it waits on, so that the open tabs show where the run is. A milestone thread's window
+closes when a CLEAR review tells the thread it is finished, a release's or a change's when its
+"Done" is confirmed; this thread's and the guide's stay for the run, and a window just opened
+goes by its step's name until the harness titles it. A window not named closed is still live,
+and a "Done" for one already closed, or with nothing out, gets the windows line again and
+nothing else.
+
 ## The script
 
 `scripts/tail.mjs` finds and reads another thread's transcript, and changes nothing.
 `--find "<text>" --cwd <dir>` lists the project's transcripts in which a message a person typed
-holds the words, newest first, leaving this thread's own out, and marks the ones where that is
-the thread's first message, as a milestone thread's prompt is; a transcript that only quotes the
-words in its replies, such as this thread's handoffs, is not listed, and with `--exact` a typed
-message counts only where it is the text alone, as a forked command the user typed is.
-`<transcript> --last <n>` prints the last replies, which are the assistant's messages with any
-question they posed and the output of any command run directly in the thread, such as a forked
-skill the user typed, then the model and effort the assistant ran at. Transcripts live under
-`~/.claude/projects/<folder>`, the folder being the working directory with every character that
-is not a letter or a digit replaced by `-`.
+holds the words, newest first, leaving this thread's own out, each with the name its tab shows,
+and marks the ones where that is the thread's first message, as a milestone thread's prompt is,
+a command run directly in the thread before it, such as `/rename`, not counting; a transcript
+that only quotes the words in its replies, such as this thread's handoffs, is not listed, and
+with `--exact` a typed message counts only where it is the text alone, as a forked command the
+user typed is. `<transcript> --last <n>` prints the last replies, which are the assistant's
+messages with any question they posed and the output of any command run directly in the thread,
+such as a forked skill the user typed, then the model and effort the assistant ran at and the
+name the tab shows. Transcripts live under `~/.claude/projects/<folder>`, the folder being the
+working directory with every character that is not a letter or a digit replaced by `-`.
 
 ## With the other skills
 
