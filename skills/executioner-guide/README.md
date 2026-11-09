@@ -73,13 +73,15 @@ same mode nothing is held, and a redirect is acted on as it arrives.
 
 ## How it runs
 
-The skill runs by hand only, on the model and effort the user sets, and its setup message says
-what they should be: the strongest model the account has, Fable 5.1 where the user's plan includes
-it, otherwise Opus 5.5, at high; a reply that designs a pipeline milestone or audits a whole tree
-says it calls for xhigh and goes on at the thread's setting unless the user changes it. Max is
-never dictated. It ends no message with a `Next turn` line and never adds a "Current step"
-section: the executioner restates the user's steps, and a step restated here drifts from the one
-the executioner holds. A prompt it writes for a fresh thread goes out as the executioner hands a
+The skill runs by hand only, on the model and effort the user sets, and its setup message says what
+they should be: the strongest model the account has, Fable 5.1 where the user's plan includes it,
+otherwise Opus 5.5, at high; a reply that designs a pipeline milestone or audits a whole tree says
+it calls for xhigh and goes on at the thread's setting unless the user changes it. Max is never
+dictated. It ends no message with a `Next turn` line and never adds a "Current step" section: the
+executioner restates the user's steps, and a step restated here drifts from the one the executioner
+holds. Every reply ends with one line on the thread's standing: what is still out and whom it waits
+on, or, word for word, that nothing is pending and the thread has wrapped up and waits for the
+user's next word. A prompt it writes for a fresh thread goes out as the executioner hands a
 milestone's over, the model and effort on the line above the block, as a milestone's Model line
 gives them; a prompt for the executioner names none.
 
