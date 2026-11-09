@@ -111,7 +111,11 @@ never name, the compatibility rule, the test and build commands, the domain's in
 rule that the plan binds on decisions and acceptance, not on its code facts. Each milestone ends
 with a report in a fixed order, a PLAN CORRECTIONS section the executioner folds back into the
 plan, a READ THIS EVIDENCE section where the milestone changes the pipeline, and a verdict line,
-`CLEAR` or `ACTION NEEDED`, that never softens a failed check into a pass.
+`CLEAR` or `ACTION NEEDED`, that never softens a failed check into a pass. Its prompt then has the
+thread send the verdict to the executioner by message and stop, and send there too, with its
+recommendation, any decision that is not its own instead of asking the user, so that the
+executioner answers from the plan and brings the user only what is theirs to decide; the user's
+"Done" still starts the review where no message arrives.
 
 Milestones are numbered in execution order, top to bottom: pipeline changes first, each proven to
 leave the existing projects identical; then additions in dependency order; a port before the

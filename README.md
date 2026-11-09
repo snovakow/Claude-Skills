@@ -44,17 +44,18 @@ that thread or in a fresh one given the plan's path, which explores the code, as
 leaves open, writes the execution plan and stress-tests it. `/executioner` then runs the execution
 plan, in the same thread or in a fresh one given its path, and hands over the first milestone's
 prompt; each milestone runs in its own fresh thread on the model and effort the plan names, makes
-ordinary content commits, and ends with a verdict. The user says "Done" to the executioner,
-which reviews the result, folds the thread's corrections into the plan, and hands over the next
-step alone: `/commit` for the review, the version and the changelog section, then, on the "Done"
-that confirms it, the next milestone's prompt. The next review reads what that release
-corrected. Beside the loop, `/executioner-guide` holds the thread the user thinks in
-while it runs: questions about the plan and the code are answered there, and what the user decides
-to add or change goes into the plan from there, in its own shape, with the executioner told and
-reading it from the file at its next turn, or, where the change cannot wait for the plan's order,
-as a redirect sent to the executioner, or a prompt the user pastes into it at its next turn or
-into a fresh thread. The plan file is the state throughout: what each thread needs is in it, and
-nothing travels by memory.
+ordinary content commits, and ends with a verdict, which it sends the executioner by message, as
+it sends any decision that is not its own instead of asking the user. The executioner, on that
+message or on the user's "Done" where none arrives, reviews the result, folds the thread's
+corrections into the plan, and hands over the next step alone: `/commit` for the review, the
+version and the changelog section, then, on the "Done" that confirms it, the next milestone's
+prompt. The next review reads what that release corrected. Beside the loop, `/executioner-guide`
+holds the thread the user thinks in while it runs: questions about the plan and the code are
+answered there, and what the user decides to add or change goes into the plan from there, in its
+own shape, with the executioner told and reading it from the file at its next turn, or, where
+the change cannot wait for the plan's order, as a redirect sent to the executioner, or a prompt
+the user pastes into it at its next turn or into a fresh thread. The plan file is the state
+throughout: what each thread needs is in it, and nothing travels by memory.
 
 ## Baseline
 

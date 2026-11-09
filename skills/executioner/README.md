@@ -2,13 +2,15 @@
 
 An `/executioner` skill for Claude Code. It makes the thread it runs in the manager of an
 execution plan written by `/execution-runbook`: it hands each milestone's prompt to a fresh
-thread, reviews that thread's result against the plan's acceptance checks when the user says
-"Done", folds the thread's corrections into the plan, hands over what follows one step at a time,
-the release before the next prompt, and ends every message with the effort the next turn needs. It
-reads everything and writes only the plan file. A companion thread, `/executioner-guide`, may
-stand beside it for the user's questions and for changes to the plan, which it reads from the
-file at its next turn, and, where a change cannot wait for the plan's order, for a redirect sent
-here by message or pasted here at the next turn, or a fresh thread started on the guide's word.
+thread, reviews that thread's result against the plan's acceptance checks when the thread reports
+by message or the user says "Done", folds the thread's corrections into the plan, hands over what
+follows one step at a time, the release before the next prompt, and ends every message with the
+effort the next turn needs. The milestone threads send their questions here by message too, and
+it answers them from the plan, bringing the user only what is theirs to decide. It reads everything
+and writes only the plan file. A companion thread, `/executioner-guide`, may stand beside it for
+the user's questions and for changes to the plan, which it reads from the file at its next turn,
+and, where a change cannot wait for the plan's order, for a redirect sent here by message or pasted
+here at the next turn, or a fresh thread started on the guide's word.
 
 It is the generic form of the manager thread that ran one of the two plans this workflow comes
 from. That thread wrote its own contract into the plan's §0, and this skill carries the contract
@@ -72,15 +74,16 @@ path: the plan file is the state, so the run loses nothing by moving.
 ## The thread's name
 
 The thread is named `executioner`: the setup message opens with `/rename executioner` to type
-where the thread's name is anything else, since the guide thread, `/executioner-guide`, reaches
-this one by that name and is reached as `executioner-guide`; `claude --name executioner` names a
-fresh thread as it starts. Where two runs share the machine, the listing of threads shows both
-names with a ref, and the ref tells them apart. A change the guide thread makes to the plan is
-read from the file at the next turn, which re-reads the progress table before anything else, and
-named in the message as this thread's own changes are. A message from a thread in another
-permission mode is held here for the user's approval, so with this thread in plan mode and the
-guide in default or auto the user releases each of the guide's messages, and one left
-unapproved expires; in the same mode nothing is held, and a redirect is acted on as it arrives.
+where the thread's name is anything else, since the milestone threads and the guide thread,
+`/executioner-guide`, reach this one by that name, and the guide is reached as `executioner-guide`;
+`claude --name executioner` names a fresh thread as it starts. Where two runs share the machine,
+the listing of threads shows both names with a ref, and the ref tells them apart. A change the
+guide thread makes to the plan is read from the file at the next turn, which re-reads the progress
+table before anything else, and named in the message as this thread's own changes are. A message
+between threads in different permission modes is held in the receiving thread for the user's
+approval, here as in the milestone threads and the guide, so with this thread in plan mode and
+the others in default or auto the user releases each message, and one left unapproved expires;
+in the same mode nothing is held, and a message is acted on as it arrives.
 
 ## How a run goes
 
@@ -93,22 +96,30 @@ unapproved expires; in the same mode nothing is held, and a redirect is acted on
    fresh thread and naming its model and effort, one fenced block written for that thread alone,
    holding the branch tips and versions as git shows them and the prompt copied verbatim from the
    plan, and the closing `Next turn` line. The user pastes the block into a fresh thread and lets
-   it run.
-3. **"Done"** reviews the result: the milestone thread's transcript is the one the script lists with
-   the prompt's words in its first typed message, and its tail is read with `tail.mjs`; the branch
-   is checked with read-only git; each acceptance item is matched to a measurement in the report, an
-   unmeasured claim counting as unmet whatever the verdict says; the PLAN CORRECTIONS are folded
-   into the plan and named; what the last release corrected is carried into the next handoff, its
-   report read from the tail for a plan fact it found wrong, a problem it reported and left, and a
-   decision the user answered that a later milestone relies on; then the next step goes over alone,
-   a fresh thread of its own: a commit the release waits for, then the release (a prompt names its
-   model and effort, a release names none where the skill's frontmatter sets its own), then, on the
-   "Done" that confirms it, the next milestone's prompt, or the prompt that continues a milestone
-   the user has acted on. Steps go together only where they can run at once, and the message says
-   so; the table's `Pending` line names the step out.
-4. **Anything else** gets an answer, with a prompt to paste where one applies. A decision the other
-   thread posed is the user's to make where it is clear; otherwise "Continue" shows it and the
-   executioner says what to answer, or the user has that thread message this one with
+   it run. The prompt ends by having the thread send its verdict here by message once its report
+   is written, and any decision that is not its own on the way, instead of asking the user.
+3. **The thread's closing message**, or the user's **"Done"** where none arrives, starts the
+   review, which reads the report from the transcript and never from the message: the milestone
+   thread's transcript is the one the script lists with the prompt's words in its first typed
+   message, and its tail is read with `tail.mjs`; the branch is checked with read-only git; each
+   acceptance item is matched to a measurement in the report, an unmeasured claim counting as
+   unmet whatever the verdict says; the PLAN CORRECTIONS are folded into the plan and named; what
+   the last release corrected is carried into the next handoff, its report read from the tail for
+   a plan fact it found wrong, a problem it reported and left, and a decision the user answered
+   that a later milestone relies on; then the next step goes over alone, a fresh thread of its
+   own: a commit the release waits for, then the release (a prompt names its model and effort, a
+   release names none where the skill's frontmatter sets its own), then, on the "Done" that
+   confirms it, the next milestone's prompt. Steps go together only where they can run at once,
+   and the message says so; the table's `Pending` line names the step out. The review ends with
+   a closing message to the thread: on CLEAR, that nothing more is asked of it; on ACTION NEEDED,
+   once the user has acted, the prompt that continues the milestone in that thread, sent there
+   rather than pasted.
+4. **A question from a milestone thread**, sent here by message as its prompt asks, is answered by
+   message from the plan where the plan decides it; a decision that is the user's is posed to them
+   here first, with a recommendation, and the answer sent on once given. **Anything else** gets an
+   answer, with a prompt to paste where one applies. A decision a thread posed to the user instead
+   is the user's to make where it is clear; otherwise "Continue" shows it and the executioner says
+   what to answer, or the user has that thread message this one with
    `answer executioner's message`, and the answer goes back by message.
 5. **The end**: §4 of the plan, the verification of the finished work, goes over as a final prompt
    and is reviewed the same way, and the run is recorded complete.
