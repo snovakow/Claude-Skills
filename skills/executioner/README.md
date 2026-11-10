@@ -99,7 +99,10 @@ in the same mode nothing is held, and a message is acted on as it arrives.
    it run. The prompt ends by having the thread send its verdict here by message once its report
    is written, and any decision that is not its own on the way, instead of asking the user.
 3. **The thread's closing message**, or the user's **"Done"** where none arrives, starts the
-   review, which reads the report from the transcript and never from the message: the milestone
+   review. A closing message needs no word from the user: the turn opens with one line saying it
+   arrived, from which window and with what verdict, and that the review runs now, so that the
+   window shows it at once and nothing is typed here in the minutes the review takes. The review
+   reads the report from the transcript and never from the message: the milestone
    thread's transcript is the one the script lists with the prompt's words in its first typed
    message, and its tail is read with `tail.mjs`; the branch is checked with read-only git; each
    acceptance item is matched to a measurement in the report, an unmeasured claim counting as
@@ -112,8 +115,9 @@ in the same mode nothing is held, and a message is acted on as it arrives.
    confirms it, the next milestone's prompt. Steps go together only where they can run at once,
    and the message says so; the table's `Pending` line names the step out. The review ends with
    a closing message to the thread: on CLEAR, that it is finished and its window is safe to
-   close, which the thread answers in one line; on ACTION NEEDED, once the user has acted, the
-   prompt that continues the milestone in that thread, sent there rather than pasted.
+   close, which the thread answers with one line in its own window and no message back, since a
+   message would start a turn here with nothing to do; on ACTION NEEDED, once the user has
+   acted, the prompt that continues the milestone in that thread, sent there rather than pasted.
 4. **A question from a milestone thread**, sent here by message as its prompt asks, is answered by
    message from the plan where the plan decides it; a decision that is the user's is posed to them
    here first, with a recommendation, and the answer sent on once given. **Anything else** gets an
@@ -134,9 +138,11 @@ run, and each message says which may close and which stay, by the names their ta
 with what it waits on, so that the open tabs show where the run is. A milestone thread's window
 closes when a CLEAR review tells the thread it is finished, a release's or a change's when its
 "Done" is confirmed; this thread's and the guide's stay for the run, and a window just opened
-goes by its step's name until the harness titles it. A window not named closed is still live,
-and a "Done" for one already closed, or with nothing out, gets the windows line again and
-nothing else.
+goes by its step's name until the harness titles it. A window not named closed is still live. A
+"Done" for one already closed, or with nothing out, and a message that asks nothing, such as a
+thread's one line sent here on its closing word, are answered with what is still out, in the
+words it was handed over with, the windows line again, and nothing else, since a reply that
+names only what the flow waits on reads as a word to type now.
 
 ## The script
 
