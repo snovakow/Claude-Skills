@@ -4,13 +4,14 @@ An `/executioner` skill for Claude Code. It makes the thread it runs in the mana
 execution plan written by `/execution-runbook`: it hands each milestone's prompt to a fresh
 thread, reviews that thread's result against the plan's acceptance checks when the thread reports
 by message or the user says "Done", folds the thread's corrections into the plan, hands over what
-follows one step at a time, the release before the next prompt, and ends every message with the
-effort the next turn needs. The milestone threads send their questions here by message too, and
-it answers them from the plan, bringing the user only what is theirs to decide. It reads everything
-and writes only the plan file. A companion thread, `/executioner-guide`, may stand beside it for
-the user's questions and for changes to the plan, which it reads from the file at its next turn,
-and, where a change cannot wait for the plan's order, for a redirect sent here by message or pasted
-here at the next turn, or a fresh thread started on the guide's word.
+follows one step at a time, the release before the next prompt, guides what is left at the end
+item by item until it closes the plan, and ends every message with the effort the next turn
+needs. The milestone threads send their questions here by message too, and it answers them from
+the plan, bringing the user only what is theirs to decide. It reads everything and writes only
+the plan file. A companion thread, `/executioner-guide`, may stand beside it for the user's
+questions and for changes to the plan, which it reads from the file at its next turn, and, where
+a change cannot wait for the plan's order, for a redirect sent here by message or pasted here at
+the next turn, or a fresh thread started on the guide's word.
 
 It is the generic form of the manager thread that ran one of the two plans this workflow comes
 from. That thread wrote its own contract into the plan's §0, and this skill carries the contract
@@ -126,23 +127,32 @@ in the same mode nothing is held, and a message is acted on as it arrives.
    what to answer, or the user has that thread message this one with
    `answer executioner's message`, and the answer goes back by message.
 5. **The end**: §4 of the plan, the verification of the finished work, goes over as a final prompt
-   and is reviewed the same way, and the run is recorded complete.
+   and is reviewed the same way. Its CLEAR review opens the close-off instead of ending the run:
+   the message lists what is left before it, each item with what closes it and whose it is (a
+   check that is the user's own, a deploy not yet confirmed, a process a thread left running,
+   which the thread stops on the user's word where its permission mode allows it and gives as the
+   user's own command where it does not, plan mode among them), and names the plan's open risks
+   as staying for later work. Every message after it takes an item up and ends with the list as
+   it stands, so that the user never has to ask where things were left. The turn that closes the
+   last item closes the plan's execution: one `Closed` line takes the place of the table's last
+   lines, the message says so with what the run delivered and what it left for later, and its
+   windows line closes this thread and the guide too. A closed plan is not run again.
 
-Every message ends with `Next turn: high` or `Next turn: xhigh`, computed from the flow: xhigh
-only where the message has just handed over a prompt whose review runs at xhigh, or asked for a
-rewrite. At the start of each turn the thread checks the effort the harness shows against that
-line; an xhigh turn at any other setting stops and asks for the change.
+Every message but the one that closes the plan ends with `Next turn: high` or `Next turn: xhigh`,
+computed from the flow: xhigh only where the message has just handed over a prompt whose review
+runs at xhigh, or asked for a rewrite. At the start of each turn the thread checks the effort the
+harness shows against that line; an xhigh turn at any other setting stops and asks for the change.
 
 The line before `Next turn` names the windows. The user keeps one open for every thread of the
 run, and each message says which may close and which stay, by the names their tabs show, each
 with what it waits on, so that the open tabs show where the run is. A milestone thread's window
 closes when a CLEAR review tells the thread it is finished, a release's or a change's when its
-"Done" is confirmed; this thread's and the guide's stay for the run, and a window just opened
-goes by its step's name until the harness titles it. A window not named closed is still live. A
-"Done" for one already closed, or with nothing out, and a message that asks nothing, such as a
-thread's one line sent here on its closing word, are answered with what is still out, in the
-words it was handed over with, the windows line again, and nothing else, since a reply that
-names only what the flow waits on reads as a word to type now.
+"Done" is confirmed; this thread's and the guide's stay until the message that closes the plan,
+and a window just opened goes by its step's name until the harness titles it. A window not named
+closed is still live. A "Done" for one already closed, or with nothing out, and a message that
+asks nothing, such as a thread's one line sent here on its closing word, are answered with what
+is still out, in the words it was handed over with, the windows line again, and nothing else,
+since a reply that names only what the flow waits on reads as a word to type now.
 
 ## The script
 

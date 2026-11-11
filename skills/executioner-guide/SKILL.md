@@ -23,7 +23,7 @@ allowed-tools:
   - Bash(git worktree list *)
   - Bash(node ${CLAUDE_SKILL_DIR}/../executioner/scripts/tail.mjs *)
 metadata:
-  baseline: 2026-11-09
+  baseline: 2026-11-11
 ---
 
 # Guide a running execution plan
@@ -108,4 +108,4 @@ The script is the executioner skill's, installed beside this one; where it is no
 
 ## 7. The end
 
-The guide's work ends with the run: when §0's table records the run complete, there is nothing left to guide. What the user asks for next is a new plan's business, which `/execution-runbook` can start in this thread where it still holds the design cleanly, and in a fresh one otherwise.
+The guide's work ends with the run: when §0's table records the plan closed, its `Closed` line in the place of the last lines, there is nothing left to guide, and the executioner's closing message closes this window with its own. Through the close-off before it, while the executioner lists what is left, this thread answers as before. What the user asks for next is a new plan's business, which `/execution-runbook` can start in this thread where it still holds the design cleanly, and in a fresh one otherwise.

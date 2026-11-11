@@ -128,7 +128,8 @@ fresh one reads them from the plan.
    milestone handed over in the executioner's place.
 6. **A message from another thread**, or the user's `answer executioner's message`: answered by
    message, recommending what the user has agreed to or would, and reported in the reply.
-7. **The end**: when the plan's progress table records the run complete, the guide's work is done.
+7. **The end**: when the plan's progress table records the plan closed, the guide's work is done,
+   and the executioner's closing message closes this window with its own.
 
 ## With the other skills
 

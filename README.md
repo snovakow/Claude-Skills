@@ -15,8 +15,9 @@ workspace changes, and linking any of the skills into a project with one command
 - [executioner](skills/executioner/) — `/executioner` makes the thread that wrote that plan, or a
   fresh one given its path, the plan's manager: it hands each milestone's prompt to a fresh
   thread, reviews each result against the plan's acceptance checks, folds the corrections into the
-  plan, says how to proceed, and ends every message with the effort the next turn needs. It reads
-  everything and writes only the plan. See its [README](skills/executioner/README.md).
+  plan, says how to proceed, guides what is left at the end until the plan is closed, and ends
+  every message with the effort the next turn needs. It reads everything and writes only the plan.
+  See its [README](skills/executioner/README.md).
 - [executioner-guide](skills/executioner-guide/) — `/executioner-guide` makes the thread it runs
   in the executioner's companion: the user's questions about the plan, the code and the libraries
   are answered there from the tree and their sources, additions and changes to the plan are
