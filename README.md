@@ -2,7 +2,8 @@
 Claude skills to accelerate and enhance project workflow by compiling plans into precise execution
 plans, running those plans milestone by milestone from a manager thread, thinking about and changing
 them from a companion thread while they run, autonomously analyzing, staging, and committing
-workspace changes, and linking any of the skills into a project with one command.
+workspace changes, deploying a clean build of a project to its live folder, and linking any of the
+skills into a project with one command.
 
 ## Skills
 
@@ -31,6 +32,13 @@ workspace changes, and linking any of the skills into a project with one command
   the README and docs true, and ends with a version commit, with a changelog section, where the
   project keeps them. It never pushes. Runs as it is in a new repository; the settings at the top
   of the skill and of its scan adapt it to a project. See its [README](skills/commit/README.md).
+- [deploy](skills/deploy/) — `/deploy` deploys `main`, or the branch it is given, to the project's
+  live folder on the same machine: it builds the branch's committed files in a temp folder with
+  `npm ci` and `npm run build`, copies what differs into the live folder in an order that is safe
+  while the site is visited, and removes the asset files older builds left behind. The checkout
+  and uncommitted work are never touched. It is linked, never adapted: a project whose deploy is
+  more than its build adds the rest in a settings file of its own. See its
+  [README](skills/deploy/README.md).
 - [link-skill](skills/link-skill/) — `/link-skill` links a skill of this clone into a project's
   `.claude/skills` and keeps the link out of the project's history, from the clone or from the
   project, with the arguments worked out from where it runs. With nothing after it, it links
