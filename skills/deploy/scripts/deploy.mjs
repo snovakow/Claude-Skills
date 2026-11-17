@@ -42,7 +42,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, posix, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const CONFIG = '.claude/deploy.config.mjs';
@@ -60,7 +60,7 @@ const tryRun = (command, commandArgs) => { try { return run(command, commandArgs
 const git = (...gitArgs) => tryRun('git', gitArgs);
 const expand = (path, from = '.') => resolve(from, path === '~' ? homedir() : path.startsWith('~/') ? join(homedir(), path.slice(2)) : path);
 const inside = (dir, path) => { const rel = relative(dir, path); return rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel); };
-const decoded = (text) => { try { return decodeURI(text); } catch { return text; } };
+const decoded = (text) => { try { return decodeURIComponent(text); } catch { return text; } };
 const statOf = (path) => { try { return statSync(path); } catch { return null; } };
 const isFile = (path) => !!path && !!statOf(path)?.isFile();
 const isDir = (path) => !!path && !!statOf(path)?.isDirectory();
@@ -256,6 +256,8 @@ const deploy = async () => {
   const own = files.filter((path) => !claimed.has(path));
   const assets = own.filter((path) => path.startsWith(assetsDir));
   const others = own.filter((path) => !path.startsWith(assetsDir) && path !== 'index.html');
+  // The site's pages: index.html, whoever owns it, and the build's other pages
+  const pages = [...new Set(['index.html', ...files.filter((path) => path.endsWith('.html') && !path.startsWith(assetsDir))])];
 
   // The front end is already live when every asset has a byte-identical live copy, under whatever name,
   // index.html matches the live one with those names swapped in, and the site's other files match too,
@@ -293,46 +295,55 @@ const deploy = async () => {
     }
   });
 
-  // The asset files a page loads, and the ones it names that the live folder doesn't have. Only the assets
-  // folder counts, since it is the part a deploy adds to and removes from: a commented-out tag, a data: URL or
-  // another site's file names nothing there. A path from the site's root can start with the folder the site is
-  // served from, so one that doesn't start at the assets folder counts only where it is found
-  const loadedBy = (index) => {
-    const found = [];
-    const missing = [];
-    for (const [, raw] of (index ?? '').replace(/<!--[\s\S]*?-->/g, '').matchAll(/\s(?:src|href)="([^"]+)"/g)) {
-      const ref = decoded(raw.replace(/[?#].*$/, '')).replace(/^\.\//, '');
-      if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(ref)) continue;
-      const parts = ref.replace(/^\/+/, '').split('/');
-      const tails = parts.map((_, at) => parts.slice(at).join('/')).filter((path) => path.startsWith(assetsDir));
-      const path = tails.find((tail) => isFile(join(liveDir, tail)));
-      if (path) found.push(path);
-      else if (tails[0] === parts.join('/')) missing.push(raw);
-    }
-    return { found, missing };
-  };
-
-  // The asset files a page reaches: the ones it loads, and the ones their scripts and styles name in turn
-  const reach = (index) => {
+  // What the site's pages load, as the live folder holds them, each path taken from the page's own folder:
+  // the asset files they reach, the asset files they name that aren't there, and the other files they load
+  // that aren't there. Only a path relative to the page is certain to be the site's own. One from the site's
+  // root, or one that climbs out of the live folder, lands wherever the site is served from, so it counts only
+  // where it is found. A commented-out tag, a data: URL and another site's file name nothing, and a link to
+  // follow is no file to load
+  const survey = () => {
     const present = walk(join(liveDir, assetsDir)).map((path) => `${assetsDir}${path}`);
-    const reached = new Set(loadedBy(index).found);
+    const reached = new Set();
+    const missing = [];
+    const absent = [];
+    for (const page of pages) {
+      const text = (readText(join(liveDir, page)) ?? '').replace(/<!--[\s\S]*?-->/g, '');
+      for (const [, tag, raw] of text.matchAll(/<([a-z][\w:-]*)\b[^>]*?\s(?:src|href)="([^"]+)"/gi)) {
+        const ref = decoded(raw.replace(/[?#].*$/, ''));
+        if (!ref || /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(ref)) continue;
+        const path = ref.startsWith('/') ? ref.replace(/^\/+/, '') : posix.join(posix.dirname(page), ref);
+        if (ref.startsWith('/') || path === '..' || path.startsWith('../')) {
+          const parts = path.split('/').filter((part) => part !== '..');
+          const found = parts.map((_, at) => parts.slice(at).join('/')).find((tail) => tail.startsWith(assetsDir) && isFile(join(liveDir, tail)));
+          if (found) reached.add(found);
+        } else if (path.startsWith(assetsDir)) {
+          if (isFile(join(liveDir, path))) reached.add(path);
+          else missing.push({ page, ref: raw });
+        } else if (!/^(?:a|area|base)$/i.test(tag) && !statOf(join(liveDir, path))) {
+          absent.push({ page, ref: raw });
+        }
+      }
+    }
+    // And the asset files their scripts and styles name in turn
     for (const path of reached) {
       if (!/\.(?:js|css)$/.test(path)) continue;
       const text = readText(join(liveDir, path)) ?? '';
       for (const other of present) if (text.includes(basename(other))) reached.add(other);
     }
-    return reached;
+    return { reached, missing, absent };
   };
+  const named = (list) => pages.map((page) => [page, list.filter((item) => item.page === page).map((item) => item.ref)])
+    .filter(([, refs]) => refs.length).map(([page, refs]) => `${page} loads ${refs.join(', ')}`).join('; ');
 
-  // Asset files from older builds. The ones the page live before this deploy reaches stay until the next
-  // deploy, since a visitor who opened that page can still ask for them, such as the code of a route not yet
+  // Asset files from older builds. The ones the site's pages reach before this deploy stay until the next
+  // deploy, since a visitor who opened a page then can still ask for them, such as the code of a route not yet
   // visited; the rest go once the copy checks out. A file a step puts in the assets folder is in use
   const inUse = new Set([...(frontEndLive ? twins.values() : assets), ...claimed]);
-  const before = reach(readText(join(liveDir, 'index.html')));
+  const before = survey().reached;
   const stale = liveAssets.filter((path) => !inUse.has(path));
   const removable = stale.filter((path) => !before.has(path));
   const kept = stale.filter((path) => before.has(path));
-  const indexChanges = plan.some(({ to }) => to === join(liveDir, 'index.html'));
+  const pagesChange = plan.some(({ to }) => pages.some((page) => to === join(liveDir, page)));
 
   if (frontEndLive) say('Front end: already live');
   if (!plan.length) {
@@ -343,7 +354,7 @@ const deploy = async () => {
   }
   if (options.dryRun) {
     if (removable.length) say(`Would remove ${plural(removable.length, 'older asset file')} once the copy checks out: ${removable.join(', ')}`);
-    if (kept.length) say(indexChanges ? `Would keep ${plural(kept.length, 'asset file')} of the build live now until the next deploy, for a visitor still on it` : `Would keep ${plural(kept.length, 'older asset file')} the live front end still loads`);
+    if (kept.length) say(pagesChange ? `Would keep ${plural(kept.length, 'asset file')} of the build live now until the next deploy, for a visitor still on it` : `Would keep ${plural(kept.length, 'older asset file')} the live front end still loads`);
     say('Dry run: nothing was copied');
     return;
   }
@@ -357,18 +368,20 @@ const deploy = async () => {
     for (const item of items) place(item.from, item.to);
   }
 
-  // Check what landed: every copied file matches the build, and the live index loads only asset files that exist
+  // Check what landed: every copied file matches the build, and the site's pages load only asset files that
+  // exist. Another file a page loads that isn't there is only noted, since a deploy removes nothing outside
+  // the assets folder
   const wrong = plan.filter((item) => !sameBytes(item.from, item.to));
   if (wrong.length) stop(`These don't match the build after copying: ${wrong.map((item) => item.label).join(', ')}`);
-  const liveIndex = readText(join(liveDir, 'index.html'));
-  const { missing } = loadedBy(liveIndex);
-  if (missing.length) stop(`The live index.html loads ${missing.join(', ')}, which the live folder doesn't have`);
+  const landed = survey();
+  if (landed.missing.length) stop(`The live ${named(landed.missing)}, which the live folder doesn't have`);
   if (plan.length) say(`Copied ${plural(plan.length, 'file')}; each one matches the build`);
+  if (landed.absent.length) say(`Note: the live ${named(landed.absent)}, which the live folder doesn't have`);
 
-  // Only after the deploy checks out: remove older asset files, but keep anything the live front end
-  // still reaches, whatever the build says, and the build this one replaced until the next deploy
+  // Only after the deploy checks out: remove older asset files, but keep anything the live pages still
+  // reach, whatever the build says, and what they reached before this deploy until the next one
   if (stale.length) {
-    const after = reach(liveIndex);
+    const after = landed.reached;
     const pruned = removable.filter((path) => !after.has(path));
     for (const path of pruned) unlinkSync(join(liveDir, path));
     const stillLoaded = stale.filter((path) => after.has(path)).length;

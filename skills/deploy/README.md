@@ -85,12 +85,17 @@ From a terminal in the project, the same arguments go to
    the project's extra steps. A file whose bytes already match is skipped, and a front end whose
    assets and index match the live ones under other names, and whose other files match too,
    counts as already live.
-5. **Checks what landed**: every copied file against the build, and that each file the live
-   `index.html` loads from the assets folder exists.
-6. **Removes older asset files**, only after that check, and never one the live page still loads.
-   The build a deploy replaces keeps its files until the next deploy, since a visitor who opened
-   the page before the switch can still ask for them, such as the code of a route not yet visited.
-   Nothing outside the assets folder is ever removed.
+5. **Checks what landed**: every copied file against the build, and what the site's pages load,
+   `index.html` and the build's other pages, against the live folder. A page that loads a file
+   from the assets folder that isn't there stops the deploy. Any other file a page loads that
+   isn't there is only noted, since a deploy removes nothing outside the assets folder. Only a
+   path relative to the page counts as missing: where a path from the site's root lands depends
+   on where the site is served.
+6. **Removes older asset files**, only after that check, and never one the site's pages still
+   reach, by loading it or through the scripts and styles they load. The ones they reached
+   before the deploy stay until the next deploy, since a visitor who opened a page before the
+   switch can still ask for them, such as the code of a route not yet visited. Nothing outside
+   the assets folder is ever removed.
 
 ## A project's settings file
 

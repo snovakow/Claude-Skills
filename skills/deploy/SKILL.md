@@ -6,7 +6,7 @@ disable-model-invocation: true
 allowed-tools:
   - Bash(node ${CLAUDE_SKILL_DIR}/scripts/deploy.mjs *)
 metadata:
-  baseline: 2026-11-16
+  baseline: 2026-11-17
 ---
 
 # Deploy to the live folder
@@ -34,6 +34,6 @@ node ${CLAUDE_SKILL_DIR}/scripts/deploy.mjs $ARGUMENTS
 
 A few lines:
 - the branch, commit and version deployed, or that it was a dry run
-- each note it printed, such as unpushed commits, a checked-out branch ahead of the one deployed, or a branch other than `main`
+- each note it printed, such as unpushed commits, a checked-out branch ahead of the one deployed, a branch other than `main`, or a file a page loads that the live folder lacks
 - what it copied, or that everything already matched, and how many older asset files it removed or kept
 - the line it ends on, which names what is now live
