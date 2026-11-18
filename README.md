@@ -3,7 +3,7 @@ Claude skills to accelerate and enhance project workflow by compiling plans into
 plans, running those plans milestone by milestone from a manager thread, thinking about and changing
 them from a companion thread while they run, autonomously analyzing, staging, and committing
 workspace changes, deploying a clean build of a project to its live folder, and linking any of the
-skills into a project with one command.
+skills into a project, or out of it, with one command.
 
 ## Skills
 
@@ -42,9 +42,16 @@ skills into a project with one command.
 - [link-skill](skills/link-skill/) — `/link-skill` links a skill of this clone into a project's
   `.claude/skills` and keeps the link out of the project's history, from the clone or from the
   project, with the arguments worked out from where it runs. With nothing after it, it links
-  every other skill of the clone into a project, and in the clone it links itself at the user
-  level where it is not there yet and lists the skills. It runs in the clone as checked out. See its
-  [README](skills/link-skill/README.md).
+  every skill of the clone but itself and `/unlink-skill` into a project, and in the clone it
+  links those two at the user level where they are not there yet and lists the skills. It runs in
+  the clone as checked out. See its [README](skills/link-skill/README.md).
+- [unlink-skill](skills/unlink-skill/) — `/unlink-skill` is the reverse: it takes a skill's link
+  out of a project's `.claude/skills` and its line out of the project's exclude file, from the
+  project or from the clone naming the project. With nothing after it, it takes every link to a
+  clone's skills out of a project, and in the clone it takes `/link-skill` and itself out of the
+  user level. It removes links and their exclude lines only, never a copy or what a link points
+  to. It runs in the clone as checked out, and everywhere once `/link-skill` has put the two at
+  the user level. See its [README](skills/unlink-skill/README.md).
 
 ## The workflow
 
@@ -116,10 +123,11 @@ repository.
 With `/link-skill`, the three commands are one, from either repository: `/link-skill
 executioner /path/to/project` in the clone, or `/link-skill executioner` in the project, which
 finds the clone that `/link-skill` itself was linked from; a bare name is a folder beside the
-one it runs in. The clone carries a link to that skill under its own `.claude/skills`, so it
-runs there as checked out, and a bare `/link-skill` links it at the user level for every
-repository and prints the help. From then on, a bare `/link-skill` in a project links every
-other skill of the clone into it at once. See its [README](skills/link-skill/README.md).
+one it runs in. The clone carries a link to that skill and to `/unlink-skill` under its own
+`.claude/skills`, so both run there as checked out, and a bare `/link-skill` links both at the
+user level for every repository and prints the help. From then on, a bare `/link-skill` in a
+project links every other skill of the clone into it at once. See its
+[README](skills/link-skill/README.md).
 
 **A copy** is for a project that needs its own version, such as `/commit` with the project's
 settings, or for a skill that is committed with the project, so that every clone of the project
@@ -135,8 +143,9 @@ cp -R skills/commit /path/to/project/.claude/skills/commit
 
 To switch a project between the two, take out what is there first. A link is deleted with a plain
 `rm`, which removes the link and nothing it points to, and its line comes out of
-`.git/info/exclude` so that a copy can be committed. A copy is moved out of `.claude/skills/`,
-since `ln` onto an existing folder puts the link inside it.
+`.git/info/exclude` so that a copy can be committed; `/unlink-skill executioner` in the project,
+or `/unlink-skill executioner /path/to/project` in the clone, does both. A copy is moved out of
+`.claude/skills/`, since `ln` onto an existing folder puts the link inside it.
 
 ### Not recommended: the user level
 
@@ -146,9 +155,10 @@ version of that name, and every such version must be renamed and run by its new 
 skill run unmodified in nearly every project, where no project keeps a version of its own. It
 suits `/commit` least, since a project copy of `/commit` is adapted by design. It is made with the
 same commands, with `~/.claude/skills/` as the destination and no exclude line; as a link it
-stays current, and as a copy it is checked like any copy. `/link-skill` is the exception that
-suits it: it is run from any repository, no project keeps a version of its own, and a bare
-`/link-skill` in the clone puts it there as a link.
+stays current, and as a copy it is checked like any copy. `/link-skill` and `/unlink-skill` are
+the exceptions that suit it: both are run from any repository, no project keeps a version of its
+own, and a bare `/link-skill` in the clone puts both there as links, which a bare `/unlink-skill`
+in the clone takes out again.
 
 ## Instructions
 

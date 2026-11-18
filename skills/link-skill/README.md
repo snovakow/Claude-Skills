@@ -5,45 +5,49 @@ project's `.claude/skills` and keeps the link out of the project's history: the 
 and the exclude line that this repository's README gives as three commands to run by hand, with
 their arguments worked out from where it runs. It runs in the clone, naming the project, or in the
 project, naming the clone or nothing. With nothing after it at all, in a project it links every
-skill of the clone but itself, and in the clone it links itself at the user level where it is not
-there yet and lists the clone's skills. It removes nothing.
+skill of the clone but itself and `/unlink-skill`, and in the clone it links those two at the user
+level where they are not there yet and lists the clone's skills. It removes nothing:
+[`/unlink-skill`](../unlink-skill/README.md) is its reverse.
 
 ## Install
 
 Nothing, inside the clone: its own `.claude/skills` carries a relative link to this skill,
 committed with the repository, so `/link-skill` runs in every clone as soon as it is checked out.
-From there, a bare `/link-skill` links it at the user level, `~/.claude/skills/link-skill`, so
-that it runs in every repository on the machine, and prints the help; `/link-skill install` does
-the link alone. That is a link and never a copy: the skill finds the clone through its own files,
-and a copy would have no clone to find. By hand, the same is, from the root of this repository:
+From there, a bare `/link-skill` links it and `/unlink-skill` at the user level,
+`~/.claude/skills/link-skill` and `~/.claude/skills/unlink-skill`, so that both run in every
+repository on the machine, and prints the help; `/link-skill install` does the links alone, and a
+bare `/unlink-skill` in the clone takes both out again. Those are links and never copies: the
+skill finds the clone through its own files, and a copy would have no clone to find. By hand, the
+same is, from the root of this repository:
 
 ```bash
 mkdir -p ~/.claude/skills
 ln -sn "$PWD/skills/link-skill" ~/.claude/skills/link-skill
+ln -sn "$PWD/skills/unlink-skill" ~/.claude/skills/unlink-skill
 ```
 
 No exclude line is needed there. From then on, a bare `/link-skill` in any project links every
-other skill of the clone into it. It can also be linked into one project like any other skill,
-`/link-skill link-skill /path/to/project` from the clone, after which `/link-skill` runs in that
-project, where a bare run links the other skills as in any project and `/link-skill install`
-links it at the user level.
+skill of the clone but those two into it. It can also be linked into one project like any other
+skill, `/link-skill link-skill /path/to/project` from the clone, after which `/link-skill` runs in
+that project, where a bare run links the other skills as in any project and `/link-skill install`
+links the two at the user level.
 
 ## Usage
 
 ```
-/link-skill                               in the clone: install this skill at the user level
-                                          where it is not yet, then the help
-/link-skill                               in a project: link every skill of the clone but this one
+/link-skill                               in the clone: install this skill and /unlink-skill at the
+                                          user level where they are not yet, then the help
+/link-skill                               in a project: link every skill of the clone but those two
 /link-skill executioner /path/to/project  in the clone: link into that project
 /link-skill executioner project           a bare name is a folder beside the clone
 /link-skill executioner                   in a project: link from the clone the skill lives in
 /link-skill all /path/to/other-clone      in a project: a path or a name is another clone
-/link-skill install                       link this skill itself at the user level, and nothing else
+/link-skill install                       link those two at the user level, and nothing else
 /link-skill --help                        the help, and nothing else
 ```
 
-Several skills can be named in one run, and `all` names every skill of the clone, this one among
-them.
+Several skills can be named in one run, and `all` names every skill of the clone, this one and
+`/unlink-skill` among them.
 
 ## How it finds the two repositories
 
@@ -53,13 +57,14 @@ and a run in a project needs no argument. Where the repository it runs in is a c
 names the project. Otherwise the repository it runs in is the project, and an argument, if any,
 names a different clone. A bare name is a folder beside the repository it runs in. Only a copy of
 the skill, which lives in no clone, falls back to a `Claude-Skills` folder beside the project, and
-a copy cannot install itself.
+a copy cannot install anything at the user level.
 
 ## What a run does
 
-- With nothing after it, in a project, links every skill of the clone but this one, as below; in
-  the clone, links this skill at the user level where it is not there yet, then prints the help.
-  `install` makes that user-level link and stops, and `--help` prints the help and stops.
+- With nothing after it, in a project, links every skill of the clone but this one and
+  `/unlink-skill`, as below; in the clone, links those two at the user level where they are not
+  there yet, then prints the help. `install` makes those user-level links and stops, and `--help`
+  prints the help and stops.
 - Checks that both are git repositories and that each skill named exists under the clone's
   `skills/`, and lists the clone's skills otherwise.
 - Makes `.claude/skills` where it is missing and links each skill with the clone's absolute path.
@@ -67,7 +72,8 @@ a copy cannot install itself.
   the right file inside a worktree too, and only where the line is not there yet.
 - Leaves a copy, or a link to somewhere else, where it finds one, such as a project's own
   `/commit`, and says what to take out first to link the clone's instead, as the repository's
-  README says under Install. It never removes anything.
+  README says under Install. It never removes anything; `/unlink-skill` takes a link and its
+  exclude line out.
 - Notes a skill of the same name under `~/.claude/skills`, which runs in place of the link.
 - Reports each link and exclude line, made or already there, and the skills that now run.
 
@@ -80,6 +86,7 @@ every project linked to it, and the link never enters the project's history.
 ## Keeping a copy current
 
 A copy of this skill lives in no clone, falls back to a `Claude-Skills` folder beside the project
-and cannot install itself, so link it instead. Where a copy exists all the same, its frontmatter's
-`metadata.baseline` is the date it was adapted from, and the diff of `SKILL.md` and
-`scripts/link.mjs` against this repository shows the drift, as with the other skills.
+and cannot install anything at the user level, so link it instead. Where a copy exists all the
+same, its frontmatter's `metadata.baseline` is the date it was adapted from, and the diff of
+`SKILL.md` and `scripts/link.mjs` against this repository shows the drift, as with the other
+skills.

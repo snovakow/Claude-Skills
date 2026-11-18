@@ -2,14 +2,14 @@
 // Helper for the /link-skill skill: links a skill of the Claude-Skills clone into a project's
 // .claude/skills and keeps the link out of the project's history, which the clone's README gives as
 // three commands to run by hand, with their arguments worked out from where it is run; and links
-// this skill itself at the user level. It makes a folder, a link and one line in the project's
-// exclude file, and removes nothing. Node 18 or later, no dependencies.
+// this skill and /unlink-skill at the user level. It makes a folder, a link and one line in the
+// project's exclude file, and removes nothing. Node 18 or later, no dependencies.
 //
 //     node link.mjs                            with nothing at all, in a project: link every skill of the
-//                                              clone but this one; in the clone, or in no repository: link
-//                                              this skill itself at the user level where it is not there
-//                                              yet, then the help, which in the clone gives where it is,
-//                                              its skills and the user-level link
+//                                              clone but this one and unlink-skill; in the clone, or in
+//                                              no repository: link those two at the user level where they
+//                                              are not there yet, then the help, which in the clone gives
+//                                              where it is, its skills and the user-level links
 //     node link.mjs <skill>... <project>       in the clone: link into the project, given as a path or as
 //                                              the name of a folder beside the clone
 //     node link.mjs <skill>... [<clone>]       in a project: link from the clone, given as a path or as
@@ -17,8 +17,8 @@
 //                                              clone this script lives in, or a Claude-Skills folder
 //                                              beside the project where the script is a copy
 //     node link.mjs all [<repository>]         every skill of the clone
-//     node link.mjs install                    link this skill itself at ~/.claude/skills/link-skill, the
-//                                              user level, so that it runs in every repository, and
+//     node link.mjs install                    link this skill and unlink-skill at ~/.claude/skills, the
+//                                              user level, so that both run in every repository, and
 //                                              nothing else; --help is the help and nothing else
 
 import { appendFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, symlinkSync } from 'node:fs';
@@ -28,6 +28,9 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const SELF = 'link-skill';
+// The skills install puts at the user level, as links to the clone, since both are run from any
+// repository; a bare run in a project leaves them out.
+const USER_LEVEL = [SELF, 'unlink-skill'];
 const args = process.argv.slice(2);
 const names = args.filter((a) => !a.startsWith('-'));
 const wantHelp = args.some((a) => a === '--help' || a === '-h');
@@ -65,29 +68,31 @@ const place = (name, src, dest) => {
   out(`${name}: skipped, ${shown(dest)} is a file, left as it is; to link this clone's instead, take it out first, then run again`); return false;
 };
 
-// With nothing at all, a project gets every skill of the clone but this one, linked further down;
-// anywhere else, the clone above all, it installs this skill where it is not there yet, then helps.
+// With nothing at all, a project gets every skill of the clone but the two that install puts at the
+// user level, linked further down; anywhere else, the clone above all, it installs those two where
+// they are not there yet, then helps.
 const bare = names.length === 0 && !wantHelp;
 const cwdRoot = repoRoot(process.cwd());
 const inClone = Boolean(cwdRoot) && isClone(cwdRoot);
 const bareInProject = bare && Boolean(cwdRoot) && !inClone;
 if (names[0] === 'install' || (bare && !bareInProject)) {
-  if (names.length > 1) fail('install takes no other argument: it links this skill itself at the user level');
-  const cannot = `this copy of the skill lives in no clone, so it cannot install itself as a link: run the clone's own, or link skills/${SELF} by hand`;
+  if (names.length > 1) fail(`install takes no other argument: it links ${USER_LEVEL.join(' and ')} at the user level`);
+  const cannot = `this copy of the skill lives in no clone, so it cannot link anything at the user level: run the clone's own, or link ${USER_LEVEL.map((n) => `skills/${n}`).join(' and ')} by hand`;
   if (!ownClone && !bare) fail(cannot);
   if (!ownClone) out(cannot);
   else {
     mkdirSync(userDir, { recursive: true });
-    const placed = place(SELF, join(ownClone, 'skills', SELF), join(userDir, SELF));
-    if (placed) out(`at the user level, /${SELF} now runs the clone's version at ${ownClone} in every repository`);
-    if (!bare) process.exit(placed ? 0 : 1);
+    const pair = USER_LEVEL.filter((n) => skillsIn(ownClone).includes(n));
+    const placed = pair.filter((n) => place(n, join(ownClone, 'skills', n), join(userDir, n)));
+    if (placed.length) out(`at the user level, ${placed.map((n) => `/${n}`).join(' and ')} now run${placed.length === 1 ? 's' : ''} the clone's version at ${ownClone} in every repository`);
+    if (!bare) process.exit(placed.length === pair.length ? 0 : 1);
   }
 }
 
 const usage = () => {
   out('usage: in the clone, link.mjs <skill>... <project>; in a project, link.mjs <skill>... [<clone>]; all for every skill;');
-  out('       a repository is a path, or the name of a folder beside the repository this runs in; install links this skill at the user level;');
-  out('       with nothing at all, a project gets every skill of the clone but this one, and the clone installs this skill at the user level');
+  out('       a repository is a path, or the name of a folder beside the repository this runs in; install links this skill and unlink-skill at the user level;');
+  out('       with nothing at all, a project gets every skill of the clone but those two, and the clone installs both at the user level');
 };
 if (!cwdRoot && bare) { usage(); process.exit(0); }
 if (!cwdRoot) fail('run this inside a git repository: the Claude-Skills clone, or the project that gets the skill');
@@ -122,7 +127,7 @@ if (inClone) {
   if (!clone) fail("no Claude-Skills clone found: this script is not inside one and none is beside this project, so give the clone's path");
 }
 
-const skills = names.includes('all') ? skillsIn(clone) : bareInProject ? skillsIn(clone).filter((n) => n !== SELF) : names;
+const skills = names.includes('all') ? skillsIn(clone) : bareInProject ? skillsIn(clone).filter((n) => !USER_LEVEL.includes(n)) : names;
 const missing = inClone && !project && skills.length > 0 ? 'the project is needed: its path, or the name of a folder beside this clone' : '';
 if (wantHelp || skills.length === 0 || missing) {
   if (missing) out(missing);
@@ -144,15 +149,17 @@ if (wantHelp || skills.length === 0 || missing) {
     const beside = readdirSync(parent).filter((n) => n !== basename(clone) && existsSync(join(parent, n, '.git'))).sort();
     out(`repositories beside the clone, by name: ${beside.join(', ') || '(none)'}`);
   }
-  const self = join(userDir, SELF);
-  let st = null; try { st = lstatSync(self); } catch { /* not there */ }
-  out(`at the user level, ${self} is ${!st ? `not there: \`install\`, or nothing at all in the clone, puts a link to the clone there, so that /${SELF} runs in every repository` : st.isSymbolicLink() ? (real(self) === real(join(clone, 'skills', SELF)) ? 'a link to this clone' : `a link to ${readlinkSync(self)}`) : st.isDirectory() ? 'a copy' : 'a file'}`);
+  for (const n of USER_LEVEL.filter((s) => skillsIn(clone).includes(s))) {
+    const at = join(userDir, n);
+    let st = null; try { st = lstatSync(at); } catch { /* not there */ }
+    out(`at the user level, ${at} is ${!st ? `not there: \`install\`, or nothing at all in the clone, puts a link to the clone there, so that /${n} runs in every repository` : st.isSymbolicLink() ? (real(at) === real(join(clone, 'skills', n)) ? 'a link to this clone' : `a link to ${readlinkSync(at)}`) : st.isDirectory() ? 'a copy' : 'a file'}`);
+  }
   process.exit(missing ? 2 : 0);
 }
 
 const unknown = skills.filter((n) => !skillsIn(clone).includes(n));
 if (unknown.length) fail(`not a skill of ${clone}: ${unknown.join(', ')}; its skills are ${skillsIn(clone).join(', ')}`);
-if (bareInProject) out(`nothing named, so every skill of the clone but ${SELF}: ${skills.join(', ')}`);
+if (bareInProject) out(`nothing named, so every skill of the clone but ${USER_LEVEL.join(' and ')}, which install puts at the user level: ${skills.join(', ')}`);
 
 const skillsDir = join(project, '.claude', 'skills');
 mkdirSync(skillsDir, { recursive: true });
