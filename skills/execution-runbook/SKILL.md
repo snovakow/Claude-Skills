@@ -26,7 +26,7 @@ allowed-tools:
   - Bash(code -r *)
   - Bash(open -a "Visual Studio Code" *)
 metadata:
-  baseline: 2026-11-11
+  baseline: 2026-11-21
 ---
 
 # Write an execution plan
@@ -142,7 +142,7 @@ Order the milestones so that each stands on what is released before it: pipeline
 
 ## 6. Versions and the release skill
 
-Where the project keeps version commits, read from the release skill what it does given no version (the generic `/commit` increments the last number of the last version commit's) and how a version is passed (its argument hint). The plan's rule: a release is a plain `/<skill>` wherever that bump gives the number the release should carry, a line's first release included, so a release command never restates the bump. A version is written in, `/<skill> <version>`, only where the number differs from the bump: a jump, from the arguments or step 4, or a line with no version commit yet, whose first number the user gives in step 4; every release after it is plain again, bumping from what was entered, so numbers run in release order. Say in §1 which milestones release nothing. Where no release skill is installed, the Commit lines say how the project releases, or "commit on <branch>" alone.
+Where the project keeps version commits, read from the release skill what it does given no version (the generic `/commit` takes the number from what the release holds: the last number of the last version commit's goes up for bug fixes and improvements, the middle one for a feature, and a major release is asked about) and how a version is passed (its argument hint). The plan's rule: a release is a plain `/<skill>` wherever that bump gives the number the release should carry, a line's first release included, so a release command never restates the bump. A version is written in, `/<skill> <version>`, only where the number differs from the bump: a jump, from the arguments or step 4, or a line with no version commit yet, whose first number the user gives in step 4; every release after it is plain again, bumping from what was entered, so numbers run in release order. Say in §1 which milestones release nothing. Where no release skill is installed, the Commit lines say how the project releases, or "commit on <branch>" alone.
 
 ## 7. Write and check
 

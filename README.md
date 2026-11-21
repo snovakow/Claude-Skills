@@ -29,9 +29,10 @@ skills into a project, or out of it, with one command.
   [README](skills/executioner-guide/README.md).
 - [commit](skills/commit/) — `/commit` reviews everything since the last reviewed point, fixes
   what can still be fixed, commits the working tree as itemised commits with real messages, keeps
-  the README and docs true, and ends with a version commit, with a changelog section, where the
-  project keeps them. It never pushes. Runs as it is in a new repository; the settings at the top
-  of the skill and of its scan adapt it to a project. See its [README](skills/commit/README.md).
+  the README and docs true, and ends with a version commit where the project keeps them, which
+  carries the release's changelog section and takes its number from what the release holds. It
+  never pushes. Runs as it is in a new repository; the settings at the top of the skill and of its
+  scan adapt it to a project. See its [README](skills/commit/README.md).
 - [deploy](skills/deploy/) — `/deploy` deploys `main`, or the branch it is given, to the project's
   live folder on the same machine: it builds the branch's committed files in a temp folder with
   `npm ci` and `npm run build`, copies what differs into the live folder in an order that is safe

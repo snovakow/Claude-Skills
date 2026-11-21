@@ -2,8 +2,9 @@
 
 A `/commit` skill for Claude Code. It reviews everything since the last reviewed point, fixes
 what can still be fixed, commits the working tree as itemised commits with real messages, keeps
-the README and docs true, and ends with a version commit where the project keeps them. It never
-pushes: the user reviews the commits and pushes them.
+the README and docs true, and ends with a version commit where the project keeps them, which
+carries the release's section of the changelog. It never pushes: the user reviews the commits and
+pushes them.
 
 It is the generic form of four project commit skills, which share one spine and differ in what
 each project adds on top. This one keeps the spine and turns the additions into settings, so it
@@ -76,12 +77,71 @@ costs nothing and a commit made by hand is still reviewed at the next release.
 5. **Docs.** Updates the maintained docs where a change makes them untrue, describing the idea
    rather than restating the code.
 6. **Version.** Ends with a version commit when the project keeps them: a one-line message,
-   only the version files, no trailer. Where the project has a changelog, the commit also
-   carries a new section for the number. It is the next run's baseline.
+   only the version files and the changelog, no trailer. The changelog section tells a user
+   what the version offers, and what it holds gives the number, unless the arguments name one.
+   It is the next run's baseline.
 7. **Report.** Flags first, then each commit, what was left out and why, the checks that ran, and
    the undo point. Nothing is pushed. What is asked for afterwards is development work: after a
    version commit it may be committed above it as ordinary commits, which the next run reviews;
    without one it is left uncommitted, since nothing would tell such a commit from the run's own.
+
+## The changelog and the number
+
+Every version commit carries the release's section of `CHANGELOG.md`. The changelog is release
+notes, not a record of the work: it tells someone using the project what a version offers, and
+leaves the detail to the commit messages. Its reader may be new to the project and has seen no
+earlier version, and what goes in and how it is worded both follow from that.
+
+| The release holds | The section says |
+| --- | --- |
+| a feature, something new to do or see | a bullet for each |
+| a bug fix where a user could clearly have seen the fault | a bullet for each |
+| smaller changes a user might still notice | nothing beside a feature; otherwise one bullet naming their kind and no more, such as `Bug fixes` or `User interface improvements` |
+| what no user would notice: data, tooling, docs | nothing, unless it is all the release holds: then `Backend improvements` |
+
+A bullet describes the project as the version leaves it, not the change that got it there, since
+a comparison with an earlier version means nothing to a reader who never saw it. It names the
+thing as the project shows it and says what it is or does in a few words, as a feature list
+would. The skill explains this by what a phrase refers to, not by a list of words to avoid.
+
+A changelog started by a run holds that run's section alone:
+
+```markdown
+# Changelog
+
+Version Release Notes
+
+## X.Y.Z - YYYY-MM-DD
+
+- One bullet for each note
+```
+
+Because the section shows what kind of release it is, it also gives the number:
+
+| The section holds | Level | The number |
+| --- | --- | --- |
+| no feature | `x.x.#` | the last goes up: `0.4.9` to `0.4.10` |
+| a feature | `x.#.x` | the middle goes up, the last returns to 0: `0.4.9` to `0.5.0` |
+| a change to the project as a whole, or a milestone | `#.x.x` | the first goes up, the others return to 0: `0.4.9` to `1.0.0` |
+
+A major release, such as `1.0.0` when the project is ready for the general public, is the user's
+to call: the run asks before writing one, and its section says what the milestone is. A version
+in the arguments, `/commit 1.0.0`, is written as it stands and overrides the level. The run's
+report gives the section as written and how it read each change in the release, as a feature, a
+fix a user could see, a small change or backend work, so that a misreading is easy to catch.
+
+A project with version commits and no changelog gets one from its next run: the version commit
+creates `CHANGELOG.md` at the root with that release's section. The releases before it are not
+written up; the changelog starts there and goes forward. From the commit that first holds the
+file, a version commit is well-formed only if it touches the changelog and the newest section
+there is headed with its number, so a bump made without its section is not taken for a baseline.
+Version commits older than the file are judged without it.
+
+The section is written in the version commit and nowhere else. A changelog change the run finds
+elsewhere is moved there: one in the working tree is held back from every content commit, and one
+in an unpushed commit is taken out of it by a fixup. A section it added becomes notes for the
+run's own, and an edit to an older section is kept as it stands. One in a pushed commit cannot be
+moved, so the version commit rewrites the section in place.
 
 ## With the other skills
 
@@ -89,8 +149,8 @@ A milestone of an execution plan (`/execution-runbook` writes one, `/executioner
 `/executioner-guide` changes it while it runs) is one or a few ordinary content commits made by
 the milestone's thread; this skill is the release the plan's Commit lines name afterwards. It runs
 in a fresh thread, as its rules say, with a version passed only where its own bump would not give
-the number, a jump or a line's first version, and the next milestone's review reads the changelog
-section it wrote for what the review corrected.
+the number, a jump or a line's first version, and the next milestone's review reads its report for
+what the review corrected, since the changelog section it wrote says only what a user would see.
 
 ## Settings
 
@@ -104,7 +164,7 @@ the scan reads.
 | Whether runs end with a version commit | Version commits | (read from the history) | `auto` |
 | Where the version lives, how it is set, the message | Version shape | `VERSION_FILE`, `VERSION_FILES`, `VERSION_MESSAGE` | `package.json`, `npm version`, `Version X.Y.Z` |
 | Only count version commits by one author | (none) | `VERSION_AUTHOR` | any author |
-| A changelog the version commit carries a section in | Changelog | `CHANGELOG` | `auto`: `CHANGELOG.md` at the root or under `docs/` |
+| The changelog every version commit carries a section in | Changelog | `CHANGELOG` | `auto`: `CHANGELOG.md` at the root or under `docs/`, started at the root where there is none |
 | Commands to run before committing | Checks | (lists package.json scripts) | lint, typecheck, check, test, build where defined |
 | Paths the skill never stages | Leave alone | `LEAVE_ALONE` | none |
 | Prose the skill keeps true | Maintained docs | `DOCS` | `README.md`, `docs/` |
@@ -122,20 +182,28 @@ run's commits are pushed the next run asks about them again. That is the trade: 
 unreviewed unless it is pushed without a run or kept at that question, and a forgotten push
 costs a question.
 
-What has been exercised, as of 2026-11-06: every path of the scan, against scratch repositories
-and against a real history with version commits; runs of the skill with version commits off, in
-this repository; and runs with version commits on, in a project copy that has released a line of
-patch versions, one per milestone of an execution plan, with no changelog yet. The changelog
-section is the one path no run has produced, and this note should change when one does.
+What has been exercised, as of 2026-11-20: every path of the scan, against scratch repositories
+and against real histories with version commits; the scan's changelog paths against scratch
+repositories only, since none of those histories holds a changelog yet; the fixup and the rebase
+that take a changelog change out of a commit, by hand in a scratch repository; runs of the skill
+with version commits off, in this repository; and runs with version commits on, in a project copy
+that has released a line of patch versions, one per milestone of an execution plan. What no run
+of the skill has produced yet is a changelog section, a number taken from the release level, or a
+changelog change moved into its version commit, and this note should change when one does.
 
 ## Growing it into a project's own
 
 Each project skill this one came from added one or more of these. They are the shapes to copy.
 
-- **More in the changelog section.** The built-in section is a prose summary of the release. A
-  project that also records something in every section, such as the unit-test count, extends the
-  well-formed tests with that line. A project whose changelog is kept in ordinary commits rather
-  than version commits sets `CHANGELOG` to null, or every version commit fails the test.
+- **More in the changelog section.** The built-in section lists features and the bug fixes a
+  user could clearly see, and sums the rest up in a line. A project that wants every fix listed,
+  or its backend work, rewrites the Changelog rule. One that records something in every section,
+  such as the unit-test count, extends the well-formed tests with that line. A project whose
+  changelog is kept in ordinary commits rather than version commits sets `CHANGELOG` to null and
+  the Changelog setting to `off`, or every version commit fails the test.
+- **A bump of another kind.** A project whose releases all take the next last number, or whose
+  numbers mean something else, rewrites the Release level rule and the Number step to say so.
+  The scan only lists the three numbers a release could take; the choice is the skill's.
 - **A version message of another shape**, such as `Version: X.Y.Z` with a colon. Change
   `VERSION_MESSAGE` along with the Version shape setting. Left at the default, the scan settles
   on whichever older commit happens to match and reviews far too much, or, finding none, on the
